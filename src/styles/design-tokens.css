@@ -1,0 +1,58 @@
+:root {
+  /* Backgrounds — True deep black */
+  --bg-void: #030303;
+  --bg-primary: #050505;
+  --bg-elevated: #0a0a0a;
+  --bg-surface: #111111;
+  --bg-hover: #1a1a1a;
+
+  /* Glass */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-bg-hover: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-hover: rgba(255, 255, 255, 0.15);
+
+  /* Text */
+  --text-primary: #f0f0f0;
+  --text-secondary: #888888;
+  --text-tertiary: #555555;
+  --text-accent: #ffffff;
+
+  /* Accent — White/star-like */
+  --accent-star: #ffffff;
+  --accent-glow: rgba(255, 255, 255, 0.6);
+  --accent-dim: rgba(255, 255, 255, 0.15);
+
+  /* Collision flash */
+  --collision-core: #ffffff;
+  --collision-outer: rgba(200, 220, 255, 0.4);
+
+  /* Functional */
+  --success: #22c55e;
+  --error: #ef4444;
+
+  /* Ring */
+  --ring-stroke: rgba(255, 255, 255, 0.06);
+  --ring-particle: #ffffff;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.8);
+  --shadow-glow: 0 0 20px rgba(255, 255, 255, 0.05);
+
+  /* Spacing */
+  --section-py: clamp(4rem, 8vh, 8rem);
+  --section-px: clamp(1rem, 4vw, 4rem);
+  --max-width: 1200px;
+
+  /* Easing */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+}

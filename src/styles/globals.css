@@ -1,0 +1,141 @@
+@import './design-tokens.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Base Reset ─── */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--bg-void);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.7;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* ─── Typography Scale ─── */
+.text-display {
+  font-size: clamp(3rem, 6vw, 6rem);
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.text-heading {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.text-subhead {
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* ─── Selection ─── */
+::selection {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ─── Section ─── */
+.section-container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--section-py) var(--section-px);
+}
+
+/* ─── Glass utilities ─── */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+}
+
+.glass:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+}
+
+/* ─── Custom cursor hide on touch ─── */
+@media (pointer: coarse) {
+  body {
+    cursor: auto;
+  }
+}
+
+/* ─── Focus visible ─── */
+:focus-visible {
+  outline: 1px solid rgba(255, 255, 255, 0.3);
+  outline-offset: 2px;
+}
+
+/* ─── Smooth section anchors ─── */
+[id] {
+  scroll-margin-top: 80px;
+}
+
+/* ─── ASCII art responsive ─── */
+.ascii-art {
+  font-family: 'JetBrains Mono', monospace;
+  white-space: pre;
+  line-height: 1.2;
+  user-select: none;
+}
+
+@media (max-width: 640px) {
+  .ascii-art {
+    font-size: 0.3rem;
+  }
+}
+
+/* ─── Skill bar animation ─── */
+@keyframes fillBar {
+  from { width: 0%; }
+  to { width: var(--bar-width); }
+}
+
+.skill-bar-fill {
+  animation: fillBar 1.2s var(--ease-out-expo) forwards;
+  animation-delay: var(--bar-delay, 0s);
+}
