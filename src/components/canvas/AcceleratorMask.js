@@ -1,188 +1,178 @@
 import { useRef, useEffect, useCallback } from 'react';
 
 /**
- * Enterprise masking effect — a circular lens that follows the cursor,
- * revealing an alternate dimension inside: a close-up particle collision
- * with glowing beams, shockwaves, and energy discharge.
+ * LHC Mask — when hovering near the accelerator ring, a lens appears
+ * that lets you "look inside" the tube. Inside you see two particle
+ * beams converging and colliding. The mask only activates near the ring.
  *
- * Uses performant RAF loop with direct style mutation (no React state).
+ * All rendering via direct DOM/canvas manipulation for 60fps.
  */
-const AcceleratorMask = () => {
+const AcceleratorMask = ({ ringRadiusX, ringRadiusY, centerX, centerY }) => {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const maskRef = useRef(null);
   const animRef = useRef(null);
-  const mouseRef = useRef({ x: -300, y: -300, targetX: -300, targetY: -300 });
-  const hoverRef = useRef(false);
-  const timeRef = useRef(0);
+  const mouse = useRef({ x: -500, y: -500, tx: -500, ty: -500 });
+  const hover = useRef(false);
+  const active = useRef(false);
+  const time = useRef(0);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
     const mask = maskRef.current;
     if (!canvas || !mask) return;
     const ctx = canvas.getContext('2d');
-    const w = canvas.width;
-    const h = canvas.height;
-    const m = mouseRef.current;
-    const t = timeRef.current;
+    const m = mouse.current;
+    const t = time.current;
 
-    // Smooth mouse interpolation
-    m.x += (m.targetX - m.x) * 0.12;
-    m.y += (m.targetY - m.y) * 0.12;
+    // Smooth interpolation
+    m.x += (m.tx - m.x) * 0.1;
+    m.y += (m.ty - m.y) * 0.1;
 
-    // Update clip-path
-    const opacity = hoverRef.current ? 1 : 0;
-    mask.style.opacity = opacity;
-    mask.style.clipPath = `circle(90px at ${m.x}px ${m.y}px)`;
+    // Check if mouse is near the ring
+    const container = containerRef.current;
+    if (!container) { animRef.current = requestAnimationFrame(draw); return; }
+    const rect = container.getBoundingClientRect();
+    const cxLocal = rect.width / 2;
+    const cyLocal = rect.height / 2;
+    const rxLocal = Math.min(rect.width, rect.height) * 0.35;
+    const ryLocal = rxLocal * 0.55;
 
-    if (!hoverRef.current && opacity < 0.01) {
-      timeRef.current += 0.016;
+    // Distance from mouse to nearest point on ellipse
+    const angle = Math.atan2((m.y - cyLocal) / ryLocal, (m.x - cxLocal) / rxLocal);
+    const nearX = cxLocal + Math.cos(angle) * rxLocal;
+    const nearY = cyLocal + Math.sin(angle) * ryLocal;
+    const dist = Math.sqrt((m.x - nearX) ** 2 + (m.y - nearY) ** 2);
+
+    const shouldBeActive = hover.current && dist < 50;
+
+    if (shouldBeActive && !active.current) active.current = true;
+    if (!shouldBeActive && active.current) active.current = false;
+
+    // Update mask
+    const maskOpacity = active.current ? 1 : 0;
+    mask.style.opacity = maskOpacity;
+    mask.style.clipPath = `circle(70px at ${m.x}px ${m.y}px)`;
+
+    if (!active.current) {
+      time.current += 0.016;
       animRef.current = requestAnimationFrame(draw);
       return;
     }
 
+    const w = canvas.width;
+    const h = canvas.height;
     ctx.clearRect(0, 0, w, h);
 
-    // Deep black interior with subtle vignette
+    // Interior of the accelerator tube
     ctx.fillStyle = '#010101';
     ctx.fillRect(0, 0, w, h);
 
     const cx = m.x;
     const cy = m.y;
 
-    // Tube structure lines (horizontal, perspective)
-    ctx.strokeStyle = 'rgba(255,255,255,0.025)';
-    ctx.lineWidth = 0.5;
-    for (let i = -8; i <= 8; i++) {
-      const yOff = i * 14;
-      const wobble = Math.sin(t * 2 + i * 0.3) * 2;
+    // Circular tube walls (concentric rings)
+    for (let r = 65; r > 10; r -= 8) {
       ctx.beginPath();
-      ctx.moveTo(cx - 200, cy + yOff + wobble);
-      ctx.lineTo(cx + 200, cy + yOff + wobble);
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255,255,255,${0.015 + (65 - r) * 0.001})`;
+      ctx.lineWidth = 0.5;
       ctx.stroke();
     }
 
-    // Vertical structure lines
-    for (let i = -6; i <= 6; i++) {
-      const xOff = i * 20;
+    // Cross-hatch structure inside tube
+    for (let i = 0; i < 8; i++) {
+      const a = (Math.PI * 2 * i) / 8 + t * 0.3;
       ctx.beginPath();
-      ctx.moveTo(cx + xOff, cy - 120);
-      ctx.lineTo(cx + xOff, cy + 120);
+      ctx.moveTo(cx + Math.cos(a) * 10, cy + Math.sin(a) * 10);
+      ctx.lineTo(cx + Math.cos(a) * 65, cy + Math.sin(a) * 65);
+      ctx.strokeStyle = 'rgba(255,255,255,0.02)';
+      ctx.lineWidth = 0.5;
       ctx.stroke();
     }
 
-    // Two converging beams
-    const cycleTime = t * 1.2;
-    const convergence = Math.abs(Math.sin(cycleTime));
-    const offset = (1 - convergence) * 100 + 5;
-    const isColliding = convergence > 0.92;
+    // Two particle beams converging
+    const cycle = Math.abs(Math.sin(t * 1.5));
+    const separation = (1 - cycle) * 50 + 3;
+    const colliding = cycle > 0.95;
 
-    // Left beam
-    const beamLength = 8;
-    for (let i = 0; i < beamLength; i++) {
-      const progress = i / beamLength;
-      const bx = cx - offset - i * 15;
-      const by = cy + Math.sin(t * 3 + i * 0.5) * 2;
-      const size = 2 - progress * 1.2;
-      const alpha = (1 - progress) * 0.7;
+    // Beam A (left)
+    for (let i = 0; i < 6; i++) {
+      const progress = i / 6;
+      const bx = cx - separation - i * 8;
+      const by = cy + Math.sin(t * 4 + i * 0.4) * 1.5;
+      const s = 1.8 - progress;
+      const a = (1 - progress) * 0.8;
 
-      // Glow
-      const grad = ctx.createRadialGradient(bx, by, 0, bx, by, size * 5);
-      grad.addColorStop(0, `rgba(255,255,255,${alpha * 0.4})`);
-      grad.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = grad;
+      const g = ctx.createRadialGradient(bx, by, 0, bx, by, s * 4);
+      g.addColorStop(0, `rgba(255,255,255,${a * 0.5})`);
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g;
       ctx.beginPath();
-      ctx.arc(bx, by, size * 5, 0, Math.PI * 2);
+      ctx.arc(bx, by, s * 4, 0, Math.PI * 2);
       ctx.fill();
 
-      // Core
       ctx.beginPath();
-      ctx.arc(bx, by, size, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.arc(bx, by, s * 0.7, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
       ctx.fill();
     }
 
-    // Right beam
-    for (let i = 0; i < beamLength; i++) {
-      const progress = i / beamLength;
-      const bx = cx + offset + i * 15;
-      const by = cy + Math.sin(t * 3 + i * 0.5 + Math.PI) * 2;
-      const size = 2 - progress * 1.2;
-      const alpha = (1 - progress) * 0.7;
+    // Beam B (right)
+    for (let i = 0; i < 6; i++) {
+      const progress = i / 6;
+      const bx = cx + separation + i * 8;
+      const by = cy + Math.sin(t * 4 + i * 0.4 + Math.PI) * 1.5;
+      const s = 1.8 - progress;
+      const a = (1 - progress) * 0.8;
 
-      const grad = ctx.createRadialGradient(bx, by, 0, bx, by, size * 5);
-      grad.addColorStop(0, `rgba(255,255,255,${alpha * 0.4})`);
-      grad.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = grad;
+      const g = ctx.createRadialGradient(bx, by, 0, bx, by, s * 4);
+      g.addColorStop(0, `rgba(255,255,255,${a * 0.5})`);
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g;
       ctx.beginPath();
-      ctx.arc(bx, by, size * 5, 0, Math.PI * 2);
+      ctx.arc(bx, by, s * 4, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.beginPath();
-      ctx.arc(bx, by, size, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.arc(bx, by, s * 0.7, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
       ctx.fill();
     }
 
-    // Collision flash
-    if (isColliding) {
-      const flash = (convergence - 0.92) / 0.08; // 0 to 1
-
-      // Central flash gradient
-      const flashGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 60 * flash);
-      flashGrad.addColorStop(0, `rgba(255,255,255,${flash * 0.6})`);
-      flashGrad.addColorStop(0.2, `rgba(200,220,255,${flash * 0.3})`);
-      flashGrad.addColorStop(0.5, `rgba(180,200,255,${flash * 0.1})`);
-      flashGrad.addColorStop(1, 'rgba(180,200,255,0)');
-      ctx.fillStyle = flashGrad;
+    // Collision
+    if (colliding) {
+      const flash = (cycle - 0.95) / 0.05;
+      const fg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 40 * flash);
+      fg.addColorStop(0, `rgba(255,255,255,${flash * 0.7})`);
+      fg.addColorStop(0.3, `rgba(200,220,255,${flash * 0.25})`);
+      fg.addColorStop(1, 'rgba(200,220,255,0)');
+      ctx.fillStyle = fg;
       ctx.beginPath();
-      ctx.arc(cx, cy, 60, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 40, 0, Math.PI * 2);
       ctx.fill();
 
-      // Energy spokes
-      const spokeCount = 12;
-      for (let i = 0; i < spokeCount; i++) {
-        const angle = (Math.PI * 2 * i) / spokeCount + t * 2;
-        const len = flash * 50 + Math.sin(t * 8 + i) * 10;
+      // Debris
+      for (let i = 0; i < 10; i++) {
+        const da = (Math.PI * 2 * i) / 10 + t * 3;
+        const dd = flash * 30 + Math.sin(t * 6 + i * 2) * 5;
         ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.lineTo(cx + Math.cos(angle) * len, cy + Math.sin(angle) * len);
-        ctx.strokeStyle = `rgba(255,255,255,${flash * 0.2})`;
-        ctx.lineWidth = 0.8;
-        ctx.stroke();
+        ctx.arc(cx + Math.cos(da) * dd, cy + Math.sin(da) * dd, 0.8, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${flash * 0.4})`;
+        ctx.fill();
       }
-
-      // Expanding shockwave ring
-      const ringR = flash * 45;
-      ctx.beginPath();
-      ctx.arc(cx, cy, ringR, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(200,220,255,${(1 - flash) * 0.4})`;
-      ctx.lineWidth = 1;
-      ctx.stroke();
     }
 
-    // Ambient energy particles floating in the tube
-    for (let i = 0; i < 15; i++) {
-      const px = cx + Math.sin(t * 0.7 + i * 2.1) * 80;
-      const py = cy + Math.cos(t * 0.5 + i * 1.7) * 60;
-      const pAlpha = 0.05 + Math.sin(t + i) * 0.03;
-      ctx.beginPath();
-      ctx.arc(px, py, 0.8, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,255,${Math.max(0, pAlpha)})`;
-      ctx.fill();
-    }
-
-    // Lens border (circular edge glow)
-    const lensGrad = ctx.createRadialGradient(cx, cy, 70, cx, cy, 92);
-    lensGrad.addColorStop(0, 'rgba(255,255,255,0)');
-    lensGrad.addColorStop(0.8, 'rgba(255,255,255,0)');
-    lensGrad.addColorStop(1, 'rgba(255,255,255,0.06)');
-    ctx.fillStyle = lensGrad;
+    // Lens border glow
+    const lg = ctx.createRadialGradient(cx, cy, 55, cx, cy, 72);
+    lg.addColorStop(0, 'rgba(255,255,255,0)');
+    lg.addColorStop(1, 'rgba(255,255,255,0.05)');
+    ctx.fillStyle = lg;
     ctx.beginPath();
-    ctx.arc(cx, cy, 92, 0, Math.PI * 2);
+    ctx.arc(cx, cy, 72, 0, Math.PI * 2);
     ctx.fill();
 
-    timeRef.current += 0.016;
+    time.current += 0.016;
     animRef.current = requestAnimationFrame(draw);
   }, []);
 
@@ -191,50 +181,40 @@ const AcceleratorMask = () => {
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    const resizeCanvas = () => {
-      const rect = container.getBoundingClientRect();
-      canvas.width = rect.width;
-      canvas.height = rect.height;
+    const resize = () => {
+      const r = container.getBoundingClientRect();
+      canvas.width = r.width;
+      canvas.height = r.height;
     };
 
-    resizeCanvas();
+    resize();
     animRef.current = requestAnimationFrame(draw);
-    window.addEventListener('resize', resizeCanvas);
-
+    window.addEventListener('resize', resize);
     return () => {
-      window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('resize', resize);
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
   }, [draw]);
 
-  const handleMouseMove = useCallback((e) => {
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    mouseRef.current.targetX = e.clientX - rect.left;
-    mouseRef.current.targetY = e.clientY - rect.top;
+  const onMove = useCallback((e) => {
+    const r = containerRef.current?.getBoundingClientRect();
+    if (!r) return;
+    mouse.current.tx = e.clientX - r.left;
+    mouse.current.ty = e.clientY - r.top;
   }, []);
 
   return (
     <div
       ref={containerRef}
       className="absolute inset-0 z-10 pointer-events-auto"
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => { hoverRef.current = true; }}
-      onMouseLeave={() => {
-        hoverRef.current = false;
-        mouseRef.current.targetX = -300;
-        mouseRef.current.targetY = -300;
-      }}
+      onMouseMove={onMove}
+      onMouseEnter={() => { hover.current = true; }}
+      onMouseLeave={() => { hover.current = false; active.current = false; mouse.current.tx = -500; mouse.current.ty = -500; }}
     >
       <div
         ref={maskRef}
         className="absolute inset-0"
-        style={{
-          opacity: 0,
-          clipPath: 'circle(90px at -300px -300px)',
-          transition: 'opacity 0.4s ease-out',
-          willChange: 'clip-path, opacity',
-        }}
+        style={{ opacity: 0, clipPath: 'circle(70px at -500px -500px)', transition: 'opacity 0.3s', willChange: 'clip-path, opacity' }}
       >
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
       </div>

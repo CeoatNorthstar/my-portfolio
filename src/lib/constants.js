@@ -20,17 +20,18 @@ export const STRIPE = {
 };
 
 export const SKILLS = [
-  { name: 'Python', level: 90, category: 'Languages' },
-  { name: 'JavaScript', level: 85, category: 'Languages' },
-  { name: 'React', level: 85, category: 'Frontend' },
-  { name: 'Node.js', level: 80, category: 'Backend' },
-  { name: 'Express', level: 80, category: 'Backend' },
-  { name: 'MongoDB', level: 75, category: 'Database' },
-  { name: 'PostgreSQL', level: 75, category: 'Database' },
-  { name: 'Data Analysis', level: 85, category: 'Data' },
-  { name: 'NumPy', level: 85, category: 'Data' },
-  { name: 'Auth Systems', level: 80, category: 'Security' },
-  { name: 'Full Stack Development', level: 85, category: 'Development' },
+  { name: 'Python', category: 'Languages' },
+  { name: 'JavaScript', category: 'Languages' },
+  { name: 'C++', category: 'Languages' },
+  { name: 'React', category: 'Frontend' },
+  { name: 'Node.js', category: 'Backend' },
+  { name: 'Express', category: 'Backend' },
+  { name: 'MongoDB', category: 'Database' },
+  { name: 'PostgreSQL', category: 'Database' },
+  { name: 'Data Analysis', category: 'Data' },
+  { name: 'NumPy', category: 'Data' },
+  { name: 'Auth Systems', category: 'Security' },
+  { name: 'Full Stack Development', category: 'Development' },
 ];
 
 export const EXPERIENCE = {

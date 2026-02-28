@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useMotionValueEvent, useScroll } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Heart } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { NAV_ITEMS } from '../../lib/constants';
 
 /**
@@ -18,6 +19,8 @@ const Navbar = () => {
   const [hidden, setHidden] = useState(false);
   const lastScrollY = useRef(0);
   const { scrollY } = useScroll();
+  const location = useLocation();
+  const isHome = location.pathname === '/';
 
   useMotionValueEvent(scrollY, 'change', (latest) => {
     const prev = lastScrollY.current;
@@ -64,9 +67,9 @@ const Navbar = () => {
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-              <a
-                href="#hero"
-                onClick={(e) => handleNav(e, '#hero')}
+              <Link
+                to="/"
+                onClick={(e) => { if (isHome) { e.preventDefault(); handleNav(e, '#hero'); } }}
                 className="font-display font-bold text-lg text-white tracking-tight flex items-center gap-1"
               >
                 NAOL
@@ -75,10 +78,10 @@ const Navbar = () => {
                   animate={{ opacity: [0.3, 1, 0.3] }}
                   transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                 />
-              </a>
+              </Link>
 
               <div className="hidden md:flex items-center gap-8">
-                {NAV_ITEMS.map((item, i) => (
+                {isHome && NAV_ITEMS.map((item, i) => (
                   <motion.a
                     key={item.label}
                     href={item.href}
@@ -91,6 +94,33 @@ const Navbar = () => {
                     {item.label}
                   </motion.a>
                 ))}
+                {!isHome && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    <Link
+                      to="/"
+                      className="font-sans text-[11px] font-medium uppercase tracking-[0.15em] text-text-2 hover:text-white transition-colors duration-300"
+                    >
+                      Home
+                    </Link>
+                  </motion.div>
+                )}
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 + NAV_ITEMS.length * 0.05 }}
+                >
+                  <Link
+                    to={isHome ? '/donate' : '/'}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] font-sans text-[10px] font-medium uppercase tracking-[0.12em] text-text-2 hover:text-white hover:bg-white/[0.06] hover:border-white/[0.15] transition-all duration-300"
+                  >
+                    <Heart size={10} />
+                    {isHome ? 'Support' : 'Back'}
+                  </Link>
+                </motion.div>
               </div>
 
               <button
@@ -134,9 +164,9 @@ const Navbar = () => {
             >
               {/* Collapsed */}
               <div className="flex items-center gap-3 px-5 h-[44px]">
-                <a
-                  href="#hero"
-                  onClick={(e) => handleNav(e, '#hero')}
+                <Link
+                  to="/"
+                  onClick={(e) => { if (isHome) { e.preventDefault(); handleNav(e, '#hero'); } }}
                   className="font-display font-bold text-sm text-white tracking-tight flex items-center gap-1 shrink-0"
                 >
                   NAOL
@@ -145,10 +175,10 @@ const Navbar = () => {
                     animate={{ opacity: [0.3, 1, 0.3] }}
                     transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                   />
-                </a>
+                </Link>
 
                 <div className="hidden md:flex items-center gap-4 ml-3">
-                  {!expanded && NAV_ITEMS.slice(0, 3).map((item) => (
+                  {!expanded && isHome && NAV_ITEMS.slice(0, 3).map((item) => (
                     <a
                       key={item.label}
                       href={item.href}
@@ -158,6 +188,15 @@ const Navbar = () => {
                       {item.label}
                     </a>
                   ))}
+                  {!expanded && (
+                    <Link
+                      to={isHome ? '/donate' : '/'}
+                      className="flex items-center gap-1 font-sans text-[10px] font-medium uppercase tracking-[0.12em] text-text-3 hover:text-white transition-colors duration-200"
+                    >
+                      <Heart size={9} />
+                      {isHome ? 'Support' : 'Home'}
+                    </Link>
+                  )}
                 </div>
 
                 <button
@@ -191,7 +230,7 @@ const Navbar = () => {
                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                   >
                     <div className="pt-1 border-t border-white/[0.06]">
-                      {NAV_ITEMS.map((item, i) => (
+                      {isHome && NAV_ITEMS.map((item, i) => (
                         <motion.a
                           key={item.label}
                           href={item.href}
@@ -204,6 +243,20 @@ const Navbar = () => {
                           {item.label}
                         </motion.a>
                       ))}
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: NAV_ITEMS.length * 0.03 }}
+                      >
+                        <Link
+                          to={isHome ? '/donate' : '/'}
+                          onClick={() => setExpanded(false)}
+                          className="flex items-center gap-1.5 py-2.5 font-sans text-xs font-medium text-text-2 hover:text-white transition-colors"
+                        >
+                          <Heart size={11} />
+                          {isHome ? 'Support My Work' : 'Back to Home'}
+                        </Link>
+                      </motion.div>
                     </div>
                   </motion.div>
                 )}
@@ -232,7 +285,7 @@ const Navbar = () => {
             </button>
 
             <nav className="flex flex-col items-center gap-6">
-              {NAV_ITEMS.map((item, i) => (
+              {isHome && NAV_ITEMS.map((item, i) => (
                 <motion.a
                   key={item.label}
                   href={item.href}
@@ -246,6 +299,21 @@ const Navbar = () => {
                   {item.label}
                 </motion.a>
               ))}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ delay: (isHome ? NAV_ITEMS.length : 0) * 0.06, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <Link
+                  to={isHome ? '/donate' : '/'}
+                  onClick={() => setMobileOpen(false)}
+                  className="font-display text-3xl font-semibold text-text-2 hover:text-white transition-colors flex items-center gap-3"
+                >
+                  <Heart size={24} />
+                  {isHome ? 'Support' : 'Home'}
+                </Link>
+              </motion.div>
             </nav>
 
             <motion.p
