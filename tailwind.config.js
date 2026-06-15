@@ -1,17 +1,21 @@
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
+  darkMode: ['class', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
-        void: '#030303',
-        primary: '#050505',
-        elevated: '#0a0a0a',
-        surface: '#111111',
-        hover: '#1a1a1a',
-        star: '#ffffff',
-        'text-1': '#f0f0f0',
-        'text-2': '#888888',
-        'text-3': '#555555',
+        // Channel-based so alpha utilities (e.g. bg-white/[0.03]) stay theme-aware.
+        white: 'rgb(var(--c-white) / <alpha-value>)',
+        black: 'rgb(var(--c-black) / <alpha-value>)',
+        void: 'rgb(var(--c-void) / <alpha-value>)',
+        primary: 'rgb(var(--c-primary) / <alpha-value>)',
+        elevated: 'rgb(var(--c-elevated) / <alpha-value>)',
+        surface: 'rgb(var(--c-surface) / <alpha-value>)',
+        hover: 'rgb(var(--c-hover) / <alpha-value>)',
+        star: 'rgb(var(--c-star) / <alpha-value>)',
+        'text-1': 'rgb(var(--c-text-1) / <alpha-value>)',
+        'text-2': 'rgb(var(--c-text-2) / <alpha-value>)',
+        'text-3': 'rgb(var(--c-text-3) / <alpha-value>)',
       },
       fontFamily: {
         mono: ['"JetBrains Mono"', '"Fira Code"', 'monospace'],

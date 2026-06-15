@@ -1,32 +1,40 @@
-import { useState, useRef } from 'react';
-import emailjs from '@emailjs/browser';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import ScrollReveal from '../ui/ScrollReveal';
 import ASCIIHeading from '../ui/ASCIIHeading';
 import GlassCard from '../ui/GlassCard';
 import GlassButton from '../ui/GlassButton';
-import { SITE, EMAILJS } from '../../lib/constants';
+import Turnstile from '../ui/Turnstile';
+import { SITE } from '../../lib/constants';
+import { sendContact } from '../../lib/api';
 import { Send, Mail, Linkedin, MapPin } from 'lucide-react';
 
 const Contact = () => {
-  const formRef = useRef();
+  const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [token, setToken] = useState('');
   const [status, setStatus] = useState('idle'); // idle | sending | sent | error
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    if (!token) {
+      setError('Please complete the verification.');
+      return;
+    }
     setStatus('sending');
-
-    emailjs
-      .sendForm(EMAILJS.serviceId, EMAILJS.templateId, formRef.current, EMAILJS.publicKey)
-      .then(() => {
-        setStatus('sent');
-        formRef.current.reset();
-        setTimeout(() => setStatus('idle'), 4000);
-      })
-      .catch(() => {
-        setStatus('error');
-        setTimeout(() => setStatus('idle'), 4000);
-      });
+    try {
+      await sendContact({ ...form, turnstileToken: token });
+      setStatus('sent');
+      setForm({ name: '', email: '', message: '' });
+      setToken('');
+      setTimeout(() => setStatus('idle'), 5000);
+    } catch (err) {
+      setError(err.message || 'Something went wrong.');
+      setStatus('error');
+    }
   };
 
   const inputClasses =
@@ -43,28 +51,35 @@ const Contact = () => {
         {/* Form */}
         <ScrollReveal delay={0.1}>
           <GlassCard hover={false}>
-            <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <input
                 type="text"
-                name="from_name"
                 placeholder="Name"
                 required
+                value={form.name}
+                onChange={(e) => set('name', e.target.value)}
                 className={inputClasses}
               />
               <input
                 type="email"
-                name="from_email"
                 placeholder="Email"
                 required
+                value={form.email}
+                onChange={(e) => set('email', e.target.value)}
                 className={inputClasses}
               />
               <textarea
-                name="message"
                 placeholder="Message"
                 rows={5}
                 required
+                value={form.message}
+                onChange={(e) => set('message', e.target.value)}
                 className={`${inputClasses} resize-none`}
               />
+
+              <Turnstile onToken={setToken} />
+
+              {error && <p className="font-mono text-xs text-red-400">{error}</p>}
 
               <GlassButton
                 type="submit"
@@ -77,7 +92,7 @@ const Contact = () => {
                 ) : status === 'sent' ? (
                   'Sent!'
                 ) : status === 'error' ? (
-                  'Failed — try again'
+                  'Try again'
                 ) : (
                   <>
                     <Send size={14} />
@@ -134,7 +149,7 @@ const Contact = () => {
 
             <div className="mt-8 pt-6 border-t border-white/[0.06]">
               <p className="font-mono text-xs text-text-3 italic">
-                "Not just to understand reality — but to help shape it."
+                "Chase time until time kills me."
               </p>
             </div>
           </GlassCard>

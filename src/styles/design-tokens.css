@@ -1,46 +1,103 @@
-:root {
-  /* Backgrounds — True deep black */
+/*
+ * Theme tokens.
+ * Colors are stored as space-separated RGB channels so Tailwind can apply
+ * alpha via `rgb(var(--c-x) / <alpha-value>)`. In light mode we deliberately
+ * INVERT the meaning of `white`/`black` so the many existing
+ * `text-white` / `bg-white/[…]` / `bg-black/40` utilities stay coherent
+ * without rewriting every component.
+ */
+
+:root,
+[data-theme='dark'] {
+  /* RGB channels (consumed by tailwind.config.js) */
+  --c-void: 3 3 3;
+  --c-primary: 5 5 5;
+  --c-elevated: 10 10 10;
+  --c-surface: 17 17 17;
+  --c-hover: 26 26 26;
+  --c-star: 255 255 255;
+  --c-text-1: 240 240 240;
+  --c-text-2: 136 136 136;
+  --c-text-3: 85 85 85;
+  --c-white: 255 255 255;
+  --c-black: 0 0 0;
+
+  /* Legacy named tokens (used in globals.css / raw CSS) */
   --bg-void: #030303;
   --bg-primary: #050505;
   --bg-elevated: #0a0a0a;
   --bg-surface: #111111;
   --bg-hover: #1a1a1a;
-
-  /* Glass */
   --glass-bg: rgba(255, 255, 255, 0.03);
   --glass-bg-hover: rgba(255, 255, 255, 0.06);
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-border-hover: rgba(255, 255, 255, 0.15);
-
-  /* Text */
   --text-primary: #f0f0f0;
   --text-secondary: #888888;
   --text-tertiary: #555555;
   --text-accent: #ffffff;
-
-  /* Accent — White/star-like */
   --accent-star: #ffffff;
   --accent-glow: rgba(255, 255, 255, 0.6);
   --accent-dim: rgba(255, 255, 255, 0.15);
-
-  /* Collision flash */
   --collision-core: #ffffff;
   --collision-outer: rgba(200, 220, 255, 0.4);
-
-  /* Functional */
-  --success: #22c55e;
-  --error: #ef4444;
-
-  /* Ring */
   --ring-stroke: rgba(255, 255, 255, 0.06);
   --ring-particle: #ffffff;
-
-  /* Shadows */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.5);
   --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.6);
   --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.8);
   --shadow-glow: 0 0 20px rgba(255, 255, 255, 0.05);
+  --selection-bg: rgba(255, 255, 255, 0.15);
+  --selection-fg: #ffffff;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+}
 
+[data-theme='light'] {
+  --c-void: 247 247 249;
+  --c-primary: 255 255 255;
+  --c-elevated: 244 244 246;
+  --c-surface: 238 238 241;
+  --c-hover: 230 230 234;
+  --c-star: 18 18 22;
+  --c-text-1: 24 24 27;
+  --c-text-2: 82 82 91;
+  --c-text-3: 140 140 150;
+  /* Inverted so glass/ink utilities adapt automatically */
+  --c-white: 18 18 22;
+  --c-black: 250 250 252;
+
+  --bg-void: #f7f7f9;
+  --bg-primary: #ffffff;
+  --bg-elevated: #f4f4f6;
+  --bg-surface: #eeeef1;
+  --bg-hover: #e6e6ea;
+  --glass-bg: rgba(18, 18, 22, 0.025);
+  --glass-bg-hover: rgba(18, 18, 22, 0.05);
+  --glass-border: rgba(18, 18, 22, 0.1);
+  --glass-border-hover: rgba(18, 18, 22, 0.18);
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-tertiary: #8c8c96;
+  --text-accent: #121216;
+  --accent-star: #121216;
+  --accent-glow: rgba(18, 18, 22, 0.5);
+  --accent-dim: rgba(18, 18, 22, 0.15);
+  --collision-core: #121216;
+  --collision-outer: rgba(60, 90, 160, 0.4);
+  --ring-stroke: rgba(18, 18, 22, 0.1);
+  --ring-particle: #121216;
+  --shadow-sm: 0 2px 8px rgba(20, 20, 30, 0.08);
+  --shadow-md: 0 4px 20px rgba(20, 20, 30, 0.1);
+  --shadow-lg: 0 8px 40px rgba(20, 20, 30, 0.14);
+  --shadow-glow: 0 0 20px rgba(20, 20, 30, 0.05);
+  --selection-bg: rgba(18, 18, 22, 0.12);
+  --selection-fg: #121216;
+  --scrollbar-thumb: rgba(18, 18, 22, 0.18);
+  --scrollbar-thumb-hover: rgba(18, 18, 22, 0.3);
+}
+
+:root {
   /* Spacing */
   --section-py: clamp(4rem, 8vh, 8rem);
   --section-px: clamp(1rem, 4vw, 4rem);

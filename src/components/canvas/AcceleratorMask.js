@@ -1,197 +1,210 @@
 import { useRef, useEffect, useCallback } from 'react';
 
 /**
- * LHC Mask — when hovering near the accelerator ring, a lens appears
- * that lets you "look inside" the tube. Inside you see two particle
- * beams converging and colliding. The mask only activates near the ring.
+ * Accelerator Zoom Lens.
  *
- * All rendering via direct DOM/canvas manipulation for 60fps.
+ * As the cursor approaches (and especially when it sits on/over) the ring,
+ * a magnifier lens grows under the pointer and "zooms into" the beamline —
+ * concentric tube rings recede into depth while two particle bunches race
+ * in from both sides and collide at the focal point. The closer you are,
+ * the deeper the zoom: bigger lens, higher magnification, faster + brighter
+ * collisions. Moving away smoothly zooms back out.
+ *
+ * Rendered with a single canvas + requestAnimationFrame for 60fps.
  */
-const AcceleratorMask = ({ ringRadiusX, ringRadiusY, centerX, centerY }) => {
+const AcceleratorMask = () => {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
-  const maskRef = useRef(null);
   const animRef = useRef(null);
   const mouse = useRef({ x: -500, y: -500, tx: -500, ty: -500 });
   const hover = useRef(false);
-  const active = useRef(false);
+  const zoom = useRef(0); // 0 (out) → 1 (fully zoomed in)
   const time = useRef(0);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
-    const mask = maskRef.current;
-    if (!canvas || !mask) return;
+    const container = containerRef.current;
+    if (!canvas || !container) {
+      animRef.current = requestAnimationFrame(draw);
+      return;
+    }
     const ctx = canvas.getContext('2d');
     const m = mouse.current;
     const t = time.current;
 
-    // Smooth interpolation
-    m.x += (m.tx - m.x) * 0.1;
-    m.y += (m.ty - m.y) * 0.1;
+    // Smooth pointer follow
+    m.x += (m.tx - m.x) * 0.18;
+    m.y += (m.ty - m.y) * 0.18;
 
-    // Check if mouse is near the ring
-    const container = containerRef.current;
-    if (!container) { animRef.current = requestAnimationFrame(draw); return; }
     const rect = container.getBoundingClientRect();
-    const cxLocal = rect.width / 2;
-    const cyLocal = rect.height / 2;
-    const rxLocal = Math.min(rect.width, rect.height) * 0.35;
-    const ryLocal = rxLocal * 0.55;
+    const cxR = rect.width / 2;
+    const cyR = rect.height / 2;
+    // Match the engine's ring geometry exactly.
+    const rx = Math.min(rect.width, rect.height) * 0.35;
+    const ry = rx * 0.55;
 
-    // Distance from mouse to nearest point on ellipse
-    const angle = Math.atan2((m.y - cyLocal) / ryLocal, (m.x - cxLocal) / rxLocal);
-    const nearX = cxLocal + Math.cos(angle) * rxLocal;
-    const nearY = cyLocal + Math.sin(angle) * ryLocal;
-    const dist = Math.sqrt((m.x - nearX) ** 2 + (m.y - nearY) ** 2);
+    // Normalised radial distance from the ring centre (1 == on the ellipse).
+    const nx = (m.x - cxR) / rx;
+    const ny = (m.y - cyR) / ry;
+    const radial = Math.sqrt(nx * nx + ny * ny);
 
-    const shouldBeActive = hover.current && dist < 50;
+    // Distance from the nearest point on the ellipse (for the approach ramp).
+    const ang = Math.atan2(ny, nx);
+    const nearX = cxR + Math.cos(ang) * rx;
+    const nearY = cyR + Math.sin(ang) * ry;
+    const distToRing = Math.hypot(m.x - nearX, m.y - nearY);
 
-    if (shouldBeActive && !active.current) active.current = true;
-    if (!shouldBeActive && active.current) active.current = false;
+    // Target zoom: full inside the ring, ramps up on approach within 160px.
+    let targetZoom = 0;
+    if (hover.current && m.tx > -400) {
+      if (radial <= 1) targetZoom = 1;
+      else targetZoom = Math.max(0, 1 - distToRing / 160);
+    }
+    zoom.current += (targetZoom - zoom.current) * 0.09;
+    const z = zoom.current;
 
-    // Update mask
-    const maskOpacity = active.current ? 1 : 0;
-    mask.style.opacity = maskOpacity;
-    mask.style.clipPath = `circle(70px at ${m.x}px ${m.y}px)`;
+    // Resize backing store if needed
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = rect.width;
+    const h = rect.height;
+    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
 
-    if (!active.current) {
-      time.current += 0.016;
+    ctx.clearRect(0, 0, w, h);
+    time.current += 0.016;
+
+    if (z < 0.02) {
       animRef.current = requestAnimationFrame(draw);
       return;
     }
 
-    const w = canvas.width;
-    const h = canvas.height;
-    ctx.clearRect(0, 0, w, h);
-
-    // Interior of the accelerator tube
-    ctx.fillStyle = '#010101';
-    ctx.fillRect(0, 0, w, h);
-
     const cx = m.x;
     const cy = m.y;
+    const R = 38 + z * 62; // lens radius grows with zoom
+    const mag = 1 + z * 2.6; // magnification of internal features
 
-    // Circular tube walls (concentric rings)
-    for (let r = 65; r > 10; r -= 8) {
+    ctx.save();
+    // Clip to the circular lens
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.clip();
+
+    // Dark interior of the beam pipe
+    ctx.fillStyle = '#04050a';
+    ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
+
+    // ── Tube depth: concentric ellipses receding toward the focal point ──
+    const rings = 7;
+    for (let i = 0; i < rings; i++) {
+      // animate the rings outward to sell the "flying down the pipe" feel
+      const phase = (t * 0.5 + i / rings) % 1;
+      const rr = phase * R * 1.25 * (0.7 + z * 0.5);
+      const a = (1 - phase) * 0.16 * z;
       ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255,255,255,${0.015 + (65 - r) * 0.001})`;
-      ctx.lineWidth = 0.5;
+      ctx.ellipse(cx, cy, rr, rr * 0.62, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(170,200,255,${a})`;
+      ctx.lineWidth = 0.6;
       ctx.stroke();
     }
 
-    // Cross-hatch structure inside tube
-    for (let i = 0; i < 8; i++) {
-      const a = (Math.PI * 2 * i) / 8 + t * 0.3;
-      ctx.beginPath();
-      ctx.moveTo(cx + Math.cos(a) * 10, cy + Math.sin(a) * 10);
-      ctx.lineTo(cx + Math.cos(a) * 65, cy + Math.sin(a) * 65);
-      ctx.strokeStyle = 'rgba(255,255,255,0.02)';
-      ctx.lineWidth = 0.5;
-      ctx.stroke();
-    }
+    // Horizontal beamline guide
+    ctx.beginPath();
+    ctx.moveTo(cx - R, cy);
+    ctx.lineTo(cx + R, cy);
+    ctx.strokeStyle = `rgba(255,255,255,${0.05 * z})`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
 
-    // Two particle beams converging
-    const cycle = Math.abs(Math.sin(t * 1.5));
-    const separation = (1 - cycle) * 50 + 3;
-    const colliding = cycle > 0.95;
+    // ── Two particle bunches converging + colliding ──
+    const cycle = (Math.sin(t * (1.4 + z * 1.6)) + 1) / 2; // 0..1
+    const sep = (1 - cycle) * R * 0.85 + 2; // separation from centre
+    const colliding = cycle > 0.93;
+    const pr = 1.6 + z * 2.2; // particle radius scales with magnification
 
-    // Beam A (left)
-    for (let i = 0; i < 6; i++) {
-      const progress = i / 6;
-      const bx = cx - separation - i * 8;
-      const by = cy + Math.sin(t * 4 + i * 0.4) * 1.5;
-      const s = 1.8 - progress;
-      const a = (1 - progress) * 0.8;
+    const drawBunch = (dir) => {
+      for (let i = 0; i < 5; i++) {
+        const trail = i * 6 * mag * 0.4;
+        const bx = cx + dir * (sep + trail);
+        const by = cy + Math.sin(t * 5 + i + (dir > 0 ? Math.PI : 0)) * 1.2;
+        const fade = (1 - i / 5) * 0.9;
+        const s = pr * (1 - i / 8);
 
-      const g = ctx.createRadialGradient(bx, by, 0, bx, by, s * 4);
-      g.addColorStop(0, `rgba(255,255,255,${a * 0.5})`);
-      g.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(bx, by, s * 4, 0, Math.PI * 2);
-      ctx.fill();
+        const g = ctx.createRadialGradient(bx, by, 0, bx, by, s * 4);
+        g.addColorStop(0, `rgba(210,225,255,${fade})`);
+        g.addColorStop(1, 'rgba(210,225,255,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(bx, by, s * 4, 0, Math.PI * 2);
+        ctx.fill();
 
-      ctx.beginPath();
-      ctx.arc(bx, by, s * 0.7, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,255,${a})`;
-      ctx.fill();
-    }
+        ctx.beginPath();
+        ctx.arc(bx, by, s, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${fade})`;
+        ctx.fill();
+      }
+    };
+    drawBunch(-1);
+    drawBunch(1);
 
-    // Beam B (right)
-    for (let i = 0; i < 6; i++) {
-      const progress = i / 6;
-      const bx = cx + separation + i * 8;
-      const by = cy + Math.sin(t * 4 + i * 0.4 + Math.PI) * 1.5;
-      const s = 1.8 - progress;
-      const a = (1 - progress) * 0.8;
-
-      const g = ctx.createRadialGradient(bx, by, 0, bx, by, s * 4);
-      g.addColorStop(0, `rgba(255,255,255,${a * 0.5})`);
-      g.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(bx, by, s * 4, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(bx, by, s * 0.7, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,255,${a})`;
-      ctx.fill();
-    }
-
-    // Collision
+    // ── Collision flash + debris ──
     if (colliding) {
-      const flash = (cycle - 0.95) / 0.05;
-      const fg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 40 * flash);
-      fg.addColorStop(0, `rgba(255,255,255,${flash * 0.7})`);
-      fg.addColorStop(0.3, `rgba(200,220,255,${flash * 0.25})`);
-      fg.addColorStop(1, 'rgba(200,220,255,0)');
+      const flash = (cycle - 0.93) / 0.07;
+      const fr = R * 0.9 * flash;
+      const fg = ctx.createRadialGradient(cx, cy, 0, cx, cy, fr);
+      fg.addColorStop(0, `rgba(255,255,255,${0.9 * flash})`);
+      fg.addColorStop(0.3, `rgba(190,215,255,${0.4 * flash})`);
+      fg.addColorStop(1, 'rgba(190,215,255,0)');
       ctx.fillStyle = fg;
       ctx.beginPath();
-      ctx.arc(cx, cy, 40, 0, Math.PI * 2);
+      ctx.arc(cx, cy, fr, 0, Math.PI * 2);
       ctx.fill();
 
-      // Debris
-      for (let i = 0; i < 10; i++) {
-        const da = (Math.PI * 2 * i) / 10 + t * 3;
-        const dd = flash * 30 + Math.sin(t * 6 + i * 2) * 5;
+      const debris = 14;
+      for (let i = 0; i < debris; i++) {
+        const da = (Math.PI * 2 * i) / debris + t * 2;
+        const dd = flash * R * 0.7 + Math.sin(t * 7 + i) * 4;
         ctx.beginPath();
-        ctx.arc(cx + Math.cos(da) * dd, cy + Math.sin(da) * dd, 0.8, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${flash * 0.4})`;
+        ctx.arc(cx + Math.cos(da) * dd, cy + Math.sin(da) * dd * 0.7, pr * 0.4, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${flash * 0.6})`;
         ctx.fill();
       }
     }
 
-    // Lens border glow
-    const lg = ctx.createRadialGradient(cx, cy, 55, cx, cy, 72);
-    lg.addColorStop(0, 'rgba(255,255,255,0)');
-    lg.addColorStop(1, 'rgba(255,255,255,0.05)');
-    ctx.fillStyle = lg;
+    // Inner vignette for depth
+    const vg = ctx.createRadialGradient(cx, cy, R * 0.4, cx, cy, R);
+    vg.addColorStop(0, 'rgba(0,0,0,0)');
+    vg.addColorStop(1, `rgba(0,0,0,${0.55 * z})`);
+    ctx.fillStyle = vg;
     ctx.beginPath();
-    ctx.arc(cx, cy, 72, 0, Math.PI * 2);
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.fill();
 
-    time.current += 0.016;
+    ctx.restore();
+
+    // ── Lens rim (outside the clip) ──
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255,255,255,${0.18 * z})`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, R + 3, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(170,200,255,${0.08 * z})`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
     animRef.current = requestAnimationFrame(draw);
   }, []);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const container = containerRef.current;
-    if (!canvas || !container) return;
-
-    const resize = () => {
-      const r = container.getBoundingClientRect();
-      canvas.width = r.width;
-      canvas.height = r.height;
-    };
-
-    resize();
     animRef.current = requestAnimationFrame(draw);
-    window.addEventListener('resize', resize);
     return () => {
-      window.removeEventListener('resize', resize);
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
   }, [draw]);
@@ -208,16 +221,16 @@ const AcceleratorMask = ({ ringRadiusX, ringRadiusY, centerX, centerY }) => {
       ref={containerRef}
       className="absolute inset-0 z-10 pointer-events-auto"
       onMouseMove={onMove}
-      onMouseEnter={() => { hover.current = true; }}
-      onMouseLeave={() => { hover.current = false; active.current = false; mouse.current.tx = -500; mouse.current.ty = -500; }}
+      onMouseEnter={() => {
+        hover.current = true;
+      }}
+      onMouseLeave={() => {
+        hover.current = false;
+        mouse.current.tx = -500;
+        mouse.current.ty = -500;
+      }}
     >
-      <div
-        ref={maskRef}
-        className="absolute inset-0"
-        style={{ opacity: 0, clipPath: 'circle(70px at -500px -500px)', transition: 'opacity 0.3s', willChange: 'clip-path, opacity' }}
-      >
-        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
-      </div>
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
     </div>
   );
 };

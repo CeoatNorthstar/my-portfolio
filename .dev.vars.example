@@ -1,0 +1,11 @@
+# Local dev secrets for `wrangler pages dev`. Copy to `.dev.vars` (gitignored).
+#
+# Lets you reach the /admin UI locally WITHOUT Cloudflare Access.
+# NEVER set this in production.
+DEV_ADMIN_BYPASS=true
+
+# Turnstile TEST secret ("always passes"). Pair with the test site key in wrangler.jsonc.
+TURNSTILE_SECRET=1x0000000000000000000000000000000AA
+
+# Stripe TEST secret key for local checkout testing (sk_test_...).
+STRIPE_SECRET_KEY=

@@ -50,7 +50,7 @@ const About = () => {
               {SITE.name}
             </h3>
             <p className="font-mono text-[10px] text-text-3 tracking-wider uppercase mb-1">
-              Founder of AxionsLab
+              Founder of Sentinel Collective
             </p>
             <p className="font-mono text-[10px] text-text-3/50 mb-6">{SITE.location}</p>
 
@@ -130,8 +130,8 @@ const About = () => {
 
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-4 mt-6">
-        {statCard('QEC', 'Research', 0.3)}
-        {statCard('AxionsLab', 'Company', 0.4)}
+        {statCard('CTCs', 'Research', 0.3)}
+        {statCard('Sentinel Collective', 'Company', 0.4)}
         {statCard('Quantum + AI', 'Focus', 0.5)}
       </div>
     </section>

@@ -39,9 +39,14 @@ const Footer = () => {
           </a>
         </div>
 
-        <p className="font-mono text-[10px] text-text-3/50">
-          Built with particles and purpose
-        </p>
+        <a
+          href={SITE.linkedin}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-mono text-[10px] text-text-3/50 hover:text-text-2 transition-colors duration-300"
+        >
+          Let's connect on LinkedIn →
+        </a>
       </div>
     </footer>
   );

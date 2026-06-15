@@ -2,11 +2,25 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/139908666.jpg" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#050505" />
-    <meta name="description" content="Naol Demisse — Quantum Theorist, Systems Architect, Founder of AxionsLab" />
+    <meta name="description" content="Naol Demisse — Quantum Theorist, Systems Architect, Founder of Sentinel Collective" />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <script>
+      // Apply saved/system theme before paint to avoid a flash.
+      (function () {
+        try {
+          var t = localStorage.getItem('theme');
+          if (t !== 'light' && t !== 'dark') {
+            t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+          }
+          document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

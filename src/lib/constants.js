@@ -1,69 +1,81 @@
 export const SITE = {
   name: 'Naol Demisse',
-  title: 'Quantum Theorist  |  Systems Architect  |  Founder of AxionsLab',
+  title: 'Quantum Theorist  |  Systems Architect  |  Founder of Sentinel Collective',
   location: 'Silver Spring, Maryland',
-  email: 'naoldemisse14@gmail.com',
-  contactEmail: 'naol@naol.pro',
+  email: 'naol@sentinelhq.world',
+  contactEmail: 'naol@sentinelhq.world',
   linkedin: 'https://linkedin.com/in/naoldemisse',
-  github: 'https://github.com/ProgNaol',
-};
-
-export const EMAILJS = {
-  serviceId: 'service_sky8gq6',
-  templateId: 'template_s669wyj',
-  publicKey: 'pdnAuEv2s3pV0femb',
-  toEmail: 'naol@naol.pro',
-};
-
-export const STRIPE = {
-  donateLink: 'https://donate.stripe.com/aFabJ3aqh2dZ6pZfrb6AM00',
+  github: 'https://github.com/Ceoatnorthstar',
 };
 
 export const SKILLS = [
   { name: 'Python', category: 'Languages' },
-  { name: 'JavaScript', category: 'Languages' },
+  { name: 'TypeScript', category: 'Languages' },
+  { name: 'Swift', category: 'Languages' },
+  { name: 'Rust', category: 'Languages' },
   { name: 'C++', category: 'Languages' },
   { name: 'React', category: 'Frontend' },
-  { name: 'Node.js', category: 'Backend' },
-  { name: 'Express', category: 'Backend' },
-  { name: 'MongoDB', category: 'Database' },
-  { name: 'PostgreSQL', category: 'Database' },
-  { name: 'Data Analysis', category: 'Data' },
-  { name: 'NumPy', category: 'Data' },
-  { name: 'Auth Systems', category: 'Security' },
-  { name: 'Full Stack Development', category: 'Development' },
+  { name: 'Tailwind CSS', category: 'Frontend' },
+  { name: 'Framer Motion', category: 'Frontend' },
+  { name: 'Cloudflare Workers', category: 'Cloud' },
+  { name: 'D1 / R2 / KV', category: 'Cloud' },
+  { name: 'Node.js', category: 'Cloud' },
+  { name: 'Qiskit', category: 'Quantum' },
+  { name: 'Quantum Circuits', category: 'Quantum' },
+  { name: 'NumPy', category: 'Quantum' },
+  { name: 'LLM Integration', category: 'AI' },
+  { name: 'PyTorch', category: 'AI' },
 ];
 
 export const EXPERIENCE = {
   role: 'Founder',
-  company: 'AxionsLab',
+  company: 'Sentinel Collective',
   period: 'Aug 2024 — Present',
   location: 'Ethiopia',
   description:
-    'Founded AxionsLab to develop advanced solutions in quantum computing, AI, and defense tech. Leading R&D initiatives focused on next-gen encryption and scientific simulation.',
+    'Founded Sentinel Collective to develop advanced solutions in quantum computing, AI, and defense tech. Leading R&D initiatives focused on next-gen encryption and scientific simulation.',
   research: [
-    'Quantum Entanglement Coefficient (QEC)',
-    'String Theory',
+    'Closed Timelike Curves (CTCs)',
+    'Quantum Information',
     'Emergent Computation',
   ],
-  topSkills: ['Cybersecurity', 'Artificial Intelligence', 'C++'],
+  topSkills: ['Quantum Information', 'Artificial Intelligence', 'Systems Architecture'],
 };
 
-export const EDUCATION = {
-  program: 'Full Stack Web Development Bootcamp',
-  institution: 'Udemy',
-  period: 'May 2024 — Aug 2024',
+// Research Log / Field Notes — replaces the old Experience section.
+export const RESEARCH_LOG = {
+  current:
+    'Comparing Deutsch and post-selected closed timelike curves through circuit-level quantum simulations.',
+  entries: [
+    {
+      year: '2025',
+      title: 'Deutsch vs. Post-selected CTCs',
+      note: 'Circuit simulations comparing the two leading models of computation in the presence of closed timelike curves.',
+      tag: 'Quantum Information',
+      link: 'https://zenodo.org/records/20693269',
+    },
+    {
+      year: '2025',
+      title: 'QuantaFlow',
+      note: 'An in-development Python package for composing and simulating quantum information workflows.',
+      tag: 'Open Source',
+      link: 'https://pypi.org/project/quantaflow/',
+    },
+    {
+      year: '2024',
+      title: 'Sentinel Collective',
+      note: 'Founded to push research at the intersection of quantum theory, AI, and resilient systems.',
+      tag: 'Founding',
+      link: null,
+    },
+  ],
 };
-
-export const CERTIFICATIONS = [
-  { title: 'Programming for Everybody (Getting Started with Python)', org: 'Coursera' },
-  { title: 'The Complete 2024 Web Development Bootcamp', org: 'Udemy' },
-];
 
 export const NAV_ITEMS = [
   { label: 'Home', href: '#hero' },
   { label: 'About', href: '#about' },
   { label: 'Projects', href: '#projects' },
+  { label: 'Research', href: '#research' },
   { label: 'Blog', href: '#blog' },
   { label: 'Contact', href: '#contact' },
 ];
@@ -71,25 +83,40 @@ export const NAV_ITEMS = [
 export const PROJECTS = [
   {
     id: 1,
-    title: 'Weather App',
-    category: 'Web Development',
+    title: 'Deutsch vs. Post-selected CTCs',
+    category: 'Physics Paper',
     description:
-      'Real-time weather forecasting with location services and beautiful visualizations.',
-    image: '/Screenshot from 2024-10-20 09-46-47.png',
-    tags: ['Express.js', 'MongoDB', 'EJS', 'CSS', 'Weather API'],
-    githubUrl: 'https://github.com/ProgNaol/weatherapp',
-    demoUrl: 'https://weather.naol.pro',
+      'A circuit-simulation study comparing the Deutsch and post-selected models of closed timelike curves, examining how each resolves quantum computation under time travel.',
+    image: null,
+    tags: ['Quantum Information', 'Qiskit', 'CTCs', 'Research'],
+    githubUrl: 'https://github.com/CeoatNorthstar/Comparing-Deutsch-and-Postselected-CTC',
+    demoUrl: 'https://zenodo.org/records/20693269',
+    demoLabel: 'Read Paper',
   },
   {
     id: 2,
-    title: 'Dream Forex',
-    category: 'Finance',
+    title: 'BrewCap',
+    category: 'macOS App',
     description:
-      'Interactive platform for learning forex trading strategies with real-time market data.',
-    image: '/Screenshot from 2024-10-20 09-49-05.png',
-    tags: ['Express.js', 'MongoDB', 'EJS', 'CSS', 'Finance API'],
-    githubUrl: 'https://github.com/ProgNaol/dreamfx',
-    demoUrl: 'https://dreamfx-0ode.onrender.com/',
+      'A native macOS battery management app that caps charging to protect long-term battery health, with a clean menu-bar experience.',
+    image: null,
+    tags: ['Swift', 'SwiftUI', 'macOS', 'Battery'],
+    githubUrl: 'https://github.com/CeoatNorthstar/BrewCap',
+    demoUrl: 'https://brewcap.app',
+    demoLabel: 'Visit Site',
+  },
+  {
+    id: 3,
+    title: 'QuantaFlow',
+    category: 'Python Package',
+    description:
+      'A Python package for composing and simulating quantum information workflows. Actively in development.',
+    image: null,
+    tags: ['Python', 'Quantum', 'Open Source'],
+    githubUrl: 'https://github.com/SentinelCollective/quantaflow',
+    demoUrl: 'https://pypi.org/project/quantaflow/',
+    demoLabel: 'View on PyPI',
+    wip: true,
   },
 ];
 
@@ -97,6 +124,6 @@ export const BIO = {
   summary:
     "Quantum theorist and systems architect exploring the deep intersections of quantum physics, artificial intelligence, and intelligent software systems.",
   detail:
-    "My research spans from building original entanglement frameworks like the Quantum Entanglement Coefficient (QEC) — to developing long-term models around spacetime, string theory, and emergent computation. Alongside theoretical work, I engineer full-stack systems using Python, AI models, and quantum hardware.",
-  tagline: "Not just to understand reality — but to help shape it.",
+    "My research spans quantum information and the computational structure of closed timelike curves, through long-term models of spacetime and emergent computation. Alongside theoretical work, I engineer full-stack systems and native software using Python, Swift, and modern web infrastructure.",
+  tagline: "Chase time until time kills me.",
 };

@@ -1,4 +1,21 @@
-# Getting Started with Create React App
+# Sentinel Collective — Portfolio & Research Platform
+
+Personal site for Naol Demisse: portfolio, projects, and an admin-only
+research/writing blog (rich embeds, file/video uploads, comments, likes,
+favorites) with light/dark themes.
+
+**Stack:** React (CRA) frontend + Cloudflare Pages Functions (D1 + R2),
+Cloudflare Access (admin auth), Turnstile (anti-bot), Stripe Embedded Checkout.
+
+➡️ **Setup, provisioning, and deployment: see [`SETUP.md`](./SETUP.md).**
+
+Quick start:
+- `npm start` — frontend only (fast UI iteration)
+- `npm run cf:dev` — full stack locally (Functions + local D1/R2)
+
+---
+
+## Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 

@@ -20,6 +20,11 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html,
+body {
+  transition: background-color 0.4s var(--ease-out-expo), color 0.4s var(--ease-out-expo);
+}
+
 body {
   font-family: 'Inter', system-ui, sans-serif;
   background: var(--bg-primary);
@@ -55,8 +60,8 @@ body {
 
 /* ─── Selection ─── */
 ::selection {
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  background: var(--selection-bg);
+  color: var(--selection-fg);
 }
 
 /* ─── Scrollbar ─── */
@@ -69,12 +74,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* ─── Section ─── */
@@ -106,8 +111,20 @@ body {
 
 /* ─── Focus visible ─── */
 :focus-visible {
-  outline: 1px solid rgba(255, 255, 255, 0.3);
+  outline: 1px solid var(--glass-border-hover);
   outline-offset: 2px;
+}
+
+/* ─── Reduced motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ─── Smooth section anchors ─── */
@@ -128,6 +145,89 @@ body {
     font-size: 0.3rem;
   }
 }
+
+/* ─── Rendered post body (sanitized HTML from the editor) ─── */
+.post-body {
+  color: var(--text-primary);
+  font-size: 1.0625rem;
+  line-height: 1.85;
+}
+.post-body > * + * {
+  margin-top: 1.25rem;
+}
+.post-body h1,
+.post-body h2,
+.post-body h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  color: var(--text-accent);
+  line-height: 1.25;
+  margin-top: 2.5rem;
+}
+.post-body h1 { font-size: 1.9rem; }
+.post-body h2 { font-size: 1.5rem; }
+.post-body h3 { font-size: 1.2rem; }
+.post-body a {
+  color: var(--text-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--accent-dim);
+}
+.post-body a:hover { text-decoration-color: var(--accent-glow); }
+.post-body strong { color: var(--text-accent); font-weight: 600; }
+.post-body ul,
+.post-body ol { padding-left: 1.4rem; }
+.post-body ul { list-style: disc; }
+.post-body ol { list-style: decimal; }
+.post-body li::marker { color: var(--text-tertiary); }
+.post-body blockquote {
+  border-left: 2px solid var(--glass-border-hover);
+  padding-left: 1.1rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+.post-body img,
+.post-body video,
+.post-body iframe {
+  max-width: 100%;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+}
+.post-body iframe { width: 100%; aspect-ratio: 16 / 9; height: auto; }
+.post-body pre {
+  background: var(--bg-elevated);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.2rem;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+.post-body code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85em;
+}
+.post-body :not(pre) > code {
+  background: var(--glass-bg-hover);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+}
+.post-body hr {
+  border: none;
+  border-top: 1px solid var(--glass-border);
+  margin: 2.5rem 0;
+}
+
+/* TipTap editor placeholder */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--text-tertiary);
+  pointer-events: none;
+  height: 0;
+}
+.ProseMirror:focus { outline: none; }
 
 /* ─── Skill bar animation ─── */
 @keyframes fillBar {

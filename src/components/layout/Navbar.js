@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useMotionValueEvent, useScroll } from 'framer-
 import { Menu, X, Heart } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { NAV_ITEMS } from '../../lib/constants';
+import ThemeToggle from '../ui/ThemeToggle';
 
 /**
  * Dynamic Island Navbar
@@ -121,15 +122,25 @@ const Navbar = () => {
                     {isHome ? 'Support' : 'Back'}
                   </Link>
                 </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 + (NAV_ITEMS.length + 1) * 0.05 }}
+                >
+                  <ThemeToggle size={16} />
+                </motion.div>
               </div>
 
-              <button
-                className="md:hidden text-text-2 hover:text-white transition-colors"
-                onClick={() => setMobileOpen(true)}
-                aria-label="Open menu"
-              >
-                <Menu size={20} />
-              </button>
+              <div className="md:hidden flex items-center gap-4">
+                <ThemeToggle size={18} />
+                <button
+                  className="text-text-2 hover:text-white transition-colors"
+                  onClick={() => setMobileOpen(true)}
+                  aria-label="Open menu"
+                >
+                  <Menu size={20} />
+                </button>
+              </div>
             </div>
           </motion.nav>
         )}
@@ -199,6 +210,10 @@ const Navbar = () => {
                   )}
                 </div>
 
+                <div className="ml-auto flex items-center gap-2 pl-2">
+                  <ThemeToggle size={13} />
+                </div>
+
                 <button
                   onClick={() => {
                     if (window.innerWidth < 768) {
@@ -207,7 +222,7 @@ const Navbar = () => {
                       setExpanded(!expanded);
                     }
                   }}
-                  className="ml-auto text-text-3 hover:text-white transition-colors p-1"
+                  className="text-text-3 hover:text-white transition-colors p-1"
                   aria-label="Toggle navigation"
                 >
                   <motion.div

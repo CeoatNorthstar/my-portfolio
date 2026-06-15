@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Rocket, Atom, Code, Zap, Star, ArrowRight, ExternalLink, ArrowLeft } from 'lucide-react';
+import { Heart, Rocket, Atom, Code, Zap, Star, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import GlassCard from '../ui/GlassCard';
 import GlassButton from '../ui/GlassButton';
-import { STRIPE, SITE } from '../../lib/constants';
+import EmbeddedDonate from './EmbeddedDonate';
+import { SITE } from '../../lib/constants';
 
 /**
  * Interactive 6-phase journey that tells Naol's story before asking
@@ -28,22 +29,22 @@ const PHASES = [
   },
   {
     icon: Rocket,
-    title: 'AxionsLab',
-    body: 'Founded AxionsLab to push the boundaries of quantum computing, AI, and defense technology. Not a side project — a mission.',
+    title: 'Sentinel Collective',
+    body: 'Founded Sentinel Collective to push the boundaries of quantum computing, AI, and defense technology. Not a side project — a mission.',
     accent: 'R&D in encryption, simulation, and emergent computation.',
     bg: 'from-white/[0.03] to-transparent',
   },
   {
     icon: Zap,
     title: 'The Research',
-    body: 'Developed the Quantum Entanglement Coefficient (QEC) — an original framework for modeling entanglement. Exploring string theory and emergent computation.',
+    body: 'Published circuit-level studies of closed timelike curves — comparing the Deutsch and post-selected models. Exploring quantum information and emergent computation.',
     accent: 'Building the mathematical groundwork for next-gen physics.',
     bg: 'from-white/[0.04] to-transparent',
   },
   {
     icon: Star,
     title: 'The Vision',
-    body: '"Not just to understand reality — but to help shape it." Every project, every line of code, every equation moves toward this goal.',
+    body: '"Chase time until time kills me." Every project, every line of code, every equation moves toward this goal.',
     accent: 'Quantum physics meets intelligent software systems.',
     bg: 'from-white/[0.04] to-transparent',
   },
@@ -127,20 +128,9 @@ const PhaseCard = ({ phase, index, isCurrent, onNext, isCompleted }) => {
         {/* Action */}
         {phase.isFinal ? (
           <div className="space-y-3">
-            <GlassButton
-              variant="primary"
-              href={STRIPE.donateLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full"
-            >
-              <Heart size={14} />
-              Support with $10
-              <ExternalLink size={12} />
-            </GlassButton>
-
+            <EmbeddedDonate />
             <p className="font-mono text-[10px] text-text-3 text-center">
-              Secure payment via Stripe
+              Secure payment via Stripe — you never leave this page.
             </p>
           </div>
         ) : (
