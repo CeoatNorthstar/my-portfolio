@@ -14,9 +14,26 @@ export const getClientId = () => {
   return id;
 };
 
+const ADMIN_TOKEN_KEY = 'sc_admin_token';
+export const getAdminToken = () => localStorage.getItem(ADMIN_TOKEN_KEY) || '';
+export const setAdminToken = (t) => {
+  if (t) localStorage.setItem(ADMIN_TOKEN_KEY, t);
+  else localStorage.removeItem(ADMIN_TOKEN_KEY);
+};
+
+// Attach the admin token header on admin API calls (Access works without it too).
+const adminHeaders = (path) => {
+  const token = getAdminToken();
+  return path.startsWith('/api/admin') && token ? { 'X-Admin-Token': token } : {};
+};
+
 const request = async (path, options = {}) => {
   const res = await fetch(path, {
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    headers: {
+      'Content-Type': 'application/json',
+      ...adminHeaders(path),
+      ...(options.headers || {}),
+    },
     ...options,
   });
   let data = null;
@@ -99,7 +116,12 @@ export const admin = {
     const form = new FormData();
     form.append('file', file);
     if (postId) form.append('post_id', postId);
-    const res = await fetch('/api/admin/upload', { method: 'POST', body: form });
+    const token = getAdminToken();
+    const res = await fetch('/api/admin/upload', {
+      method: 'POST',
+      headers: token ? { 'X-Admin-Token': token } : {},
+      body: form,
+    });
     const data = await res.json().catch(() => null);
     if (!res.ok) throw new Error((data && data.error) || 'Upload failed');
     return data;

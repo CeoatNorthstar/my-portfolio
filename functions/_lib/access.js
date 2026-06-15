@@ -36,8 +36,35 @@ const getToken = (request) => {
   return match ? match[1] : null;
 };
 
+// Constant-time string compare to avoid leaking the token via timing.
+const timingSafeEqual = (a, b) => {
+  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i += 1) mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return mismatch === 0;
+};
+
 /**
- * Returns the verified identity ({ email, ... }) or null.
+ * Admin gate. Accepts EITHER a valid Cloudflare Access identity OR a matching
+ * secret admin token (X-Admin-Token header vs the ADMIN_TOKEN secret). This lets
+ * the console work immediately while still allowing Access to be layered on top.
+ */
+export const verifyAdmin = async (request, env) => {
+  const identity = await verifyAccess(request, env);
+  if (identity) return identity;
+
+  const expected = env.ADMIN_TOKEN;
+  if (expected) {
+    const provided = request.headers.get('X-Admin-Token') || '';
+    if (provided && timingSafeEqual(provided, expected)) {
+      return { email: env.CONTACT_TO_EMAIL || 'admin', token: true };
+    }
+  }
+  return null;
+};
+
+/**
+ * Returns the verified Access identity ({ email, ... }) or null.
  */
 export const verifyAccess = async (request, env) => {
   // Local dev escape hatch — only when explicitly enabled in .dev.vars.

@@ -1,6 +1,6 @@
 {
   // Cloudflare Pages project config (frontend build + /functions API).
-  "name": "sentinel-collective",
+  "name": "naol",
   "compatibility_date": "2024-11-01",
   "compatibility_flags": ["nodejs_compat"],
   "pages_build_output_dir": "build",
@@ -10,7 +10,7 @@
     {
       "binding": "DB",
       "database_name": "sentinel-blog",
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID"
+      "database_id": "94dcd620-0c6f-4471-a626-b2c57965b861"
     }
   ],
 
