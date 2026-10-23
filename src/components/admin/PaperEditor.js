@@ -108,6 +108,24 @@ const PaperEditor = () => {
     [fill]
   );
 
+  // Re-read the fields from the file in hand, or from the stored PDF.
+  const reread = async () => {
+    if (file) {
+      readPdf(file, { overwrite: true });
+      return;
+    }
+    if (!pdf?.url) return;
+    setPhase('reading');
+    try {
+      const res = await fetch(pdf.url);
+      if (!res.ok) throw new Error('fetch failed');
+      await readPdf(await res.blob(), { overwrite: true });
+    } catch {
+      setError('Could not fetch the stored PDF to read it again.');
+      setPhase('ready');
+    }
+  };
+
   const accept = async (f) => {
     if (!f) return;
     if (f.type !== 'application/pdf' && !/\.pdf$/i.test(f.name)) {
@@ -281,8 +299,8 @@ const PaperEditor = () => {
                   <UploadSimple size={13} weight="bold" /> Replace
                   <input type="file" accept="application/pdf" hidden onChange={(e) => accept(e.target.files[0])} />
                 </label>
-                {file && (
-                  <Button variant="ghost" className="!h-8 !px-3 !text-[12.5px]" onClick={() => readPdf(file, { overwrite: true })}>
+                {(file || pdf?.url) && (
+                  <Button variant="ghost" className="!h-8 !px-3 !text-[12.5px]" onClick={reread} disabled={phase === 'reading'}>
                     <ArrowClockwise size={13} weight="bold" /> Re-read fields
                   </Button>
                 )}

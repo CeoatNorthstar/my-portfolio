@@ -118,10 +118,40 @@ const pickTitle = (lines, meta) => {
 const STOP_ABSTRACT = /^((\d+|[ivx]+)\.?\s*)?(introduction|keywords?|key\s*words|index terms|pacs|subject|ccs concepts|msc|contents)\b/i;
 const KEYWORDS_LABEL = /\b(keywords?|key\s*words|index terms)\s*[:.\u2014]\s*/i;
 
+const SECTION_HEADING = /^([IVX]+|\d+)\.?\s+[A-Z][A-Z ,:'-]{3,}$/;
+const FRONT_MATTER = /^\(?(dated|received|accepted|published|revised|preprint|arxiv)\b/i;
+
+// No "Abstract" label (REVTeX / APS style): the abstract is the longest block
+// of evenly spaced, same-size lines before the first section heading.
+const unlabeledAbstract = (early) => {
+  const stop = early.findIndex((l) => STOP_ABSTRACT.test(l.text) || SECTION_HEADING.test(l.text));
+  const head = stop === -1 ? early.filter((l) => l.page === 1) : early.slice(0, stop);
+
+  const runs = [];
+  head.forEach((l, i) => {
+    const prev = head[i - 1];
+    const drop = prev ? prev.y - l.y : 0;
+    // Raised math (roots, superscripts) can sit slightly above the line before it.
+    const continues =
+      prev && prev.page === l.page && Math.abs(prev.size - l.size) < 0.6 && drop > -l.size && drop < l.size * 2.2;
+    if (continues) runs[runs.length - 1].push(l);
+    else runs.push([l]);
+  });
+
+  const best = runs
+    .map((run) => {
+      // Skip author / affiliation / date lines at the top of the block.
+      const first = run.findIndex((l) => l.text.length >= 50 && !FRONT_MATTER.test(l.text));
+      return first === -1 ? '' : joinLines(run.slice(first).map((l) => l.text));
+    })
+    .sort((a, b) => b.length - a.length)[0];
+  return best && best.length >= 200 ? best.slice(0, 4000) : '';
+};
+
 const pickAbstract = (lines) => {
   const early = lines.filter((l) => l.page <= 3);
   const start = early.findIndex((l) => squash(l.text).startsWith('abstract'));
-  if (start === -1) return '';
+  if (start === -1) return unlabeledAbstract(early);
 
   const out = [];
   const head = early[start].text.replace(/^\s*a\s*b\s*s\s*t\s*r\s*a\s*c\s*t\s*[.:—–-]?\s*/i, '');
@@ -242,10 +272,22 @@ const pickReferences = (lines) => {
       break;
     }
   }
-  if (start === -1) return [];
+  let from = start + 1;
+  if (start === -1) {
+    // No heading (REVTeX / APS style): the list starts at the last "[1]"
+    // that is followed by a "[2]".
+    from = -1;
+    for (let i = lines.length - 1; i >= 0; i -= 1) {
+      if (/^\[1\]\s/.test(lines[i].text) && lines.slice(i + 1, i + 60).some((l) => /^\[2\]\s/.test(l.text))) {
+        from = i;
+        break;
+      }
+    }
+    if (from === -1) return [];
+  }
 
   const body = [];
-  for (let i = start + 1; i < lines.length; i += 1) {
+  for (let i = from; i < lines.length; i += 1) {
     if (REF_END.test(lines[i].text)) break;
     if (/^\d{1,3}$/.test(lines[i].text)) continue; // page numbers
     body.push(lines[i]);
