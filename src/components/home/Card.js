@@ -23,7 +23,8 @@ const Identity = ({ className = '' }) => (
 
 /**
  * The business card. Photo, name and role never change; the information
- * area next to the photo swaps with the nav (About, Contact, Donate).
+ * area next to the photo swaps with the nav (About, Contact). Blog, Papers
+ * and Donate open as a panel beside the card.
  * Double-click the photo to turn the card over.
  */
 const Card = ({ view, panel, compact, newPaper, onNav, onHome }) => {
@@ -104,7 +105,7 @@ const Card = ({ view, panel, compact, newPaper, onNav, onHome }) => {
                     )}
                     {isActive(item.key) && (
                       <motion.span
-                        layoutId={item.key === 'blog' || item.key === 'papers' ? 'nav-panel' : 'nav-view'}
+                        layoutId={['blog', 'papers', 'donate'].includes(item.key) ? 'nav-panel' : 'nav-view'}
                         className="absolute left-[7px] right-[7px] sm:left-3 sm:right-3 bottom-[3px] h-px bg-ink"
                         transition={{ type: 'spring', stiffness: 500, damping: 40 }}
                       />

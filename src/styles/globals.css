@@ -161,6 +161,8 @@ button {
 .press { transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s, color 0.2s, border-color 0.2s; }
 .press:active { transform: scale(0.98); }
 
+dbox-widget { display: block; max-width: 100%; }
+
 /* ─── Business card flip (easter egg) ─── */
 .flip-scene { perspective: 1600px; }
 .flip-inner {

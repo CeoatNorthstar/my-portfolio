@@ -7,11 +7,13 @@ import useMediaQuery from '../../hooks/useMediaQuery';
 import IconButton from '../ui/IconButton';
 import Card from './Card';
 import { BlogList, PaperList } from './Lists';
+import DonateForm from './DonateForm';
 
-const VIEWS = ['about', 'contact', 'donate'];
+const VIEWS = ['about', 'contact'];
 const PANELS = {
   blog: { title: 'Blog', blurb: 'Notes, ideas and things still taking shape.', List: BlogList },
   papers: { title: 'Papers', blurb: 'Formal work. Abstract up front, the full paper one click away.', List: PaperList },
+  donate: { title: 'Donate', blurb: 'Buy me a coffee, and I will write more papers.', List: DonateForm },
 };
 const SPRING = { type: 'spring', stiffness: 260, damping: 32, mass: 0.9 };
 

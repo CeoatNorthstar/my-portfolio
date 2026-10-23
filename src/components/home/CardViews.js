@@ -163,19 +163,7 @@ const Contact = () => {
   );
 };
 
-const Donate = () => (
-  <div className="max-w-[36ch]">
-    <span className="badge-new">Soon</span>
-    <p className="mt-3 text-[14px] leading-[1.65] text-ink">
-      Independent research runs on curiosity, time and a lot of coffee. A way to support the work is on its way.
-    </p>
-    <p className="mt-3 text-[14px] leading-[1.65] text-ink-2">
-      Until then, reading a paper and passing it along helps more than you would think.
-    </p>
-  </div>
-);
-
-const VIEWS = { intro: Intro, about: About, contact: Contact, donate: Donate };
+const VIEWS = { intro: Intro, about: About, contact: Contact };
 
 const CardView = ({ view }) => {
   const View = VIEWS[view] || Intro;
