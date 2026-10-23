@@ -12,10 +12,10 @@ export const onRequestGet = async ({ params, request, env }) => {
   if (rangeMatch) {
     const start = rangeMatch[1] ? parseInt(rangeMatch[1], 10) : undefined;
     const end = rangeMatch[2] ? parseInt(rangeMatch[2], 10) : undefined;
-    const opts = { range: {} };
-    if (start !== undefined) opts.range.offset = start;
-    if (end !== undefined && start !== undefined) opts.range.length = end - start + 1;
-    object = await env.MEDIA.get(key, opts);
+    let r;
+    if (start !== undefined) r = end !== undefined ? { offset: start, length: end - start + 1 } : { offset: start };
+    else if (end !== undefined) r = { suffix: end };
+    object = await env.MEDIA.get(key, r ? { range: r } : undefined);
   } else {
     object = await env.MEDIA.get(key);
   }
@@ -30,7 +30,7 @@ export const onRequestGet = async ({ params, request, env }) => {
 
   if (rangeMatch && object.range) {
     const total = object.size;
-    const start = object.range.offset || 0;
+    const start = object.range.suffix !== undefined ? total - object.range.suffix : object.range.offset || 0;
     const length = object.range.length || total - start;
     const end = start + length - 1;
     headers.set('Content-Range', `bytes ${start}-${end}/${total}`);

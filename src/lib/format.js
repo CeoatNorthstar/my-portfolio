@@ -1,18 +1,33 @@
-export const formatDate = (ts) => {
+export const formatDate = (ts, opts = {}) => {
   if (!ts) return '';
   try {
     return new Date(ts).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
+      ...opts,
     });
   } catch {
     return '';
   }
 };
 
-export const TYPE_LABELS = {
-  article: 'Article',
-  research: 'Research',
-  link: 'Link',
+export const timeAgo = (ts) => {
+  const s = Math.max(1, Math.round((Date.now() - ts) / 1000));
+  if (s < 60) return 'just now';
+  const m = Math.round(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.round(h / 24);
+  if (d < 30) return `${d}d ago`;
+  return formatDate(ts);
 };
+
+export const fileSize = (bytes) => {
+  if (!bytes) return '';
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+export const toDateInput = (ts) => new Date(ts || Date.now()).toISOString().slice(0, 10);

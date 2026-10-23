@@ -45,5 +45,5 @@ export const onRequestPost = async ({ request, env }) => {
     .bind(uuid(), form.get('post_id') || null, kind, key, url, file.name || safeName, mime, file.size, now())
     .run();
 
-  return json({ url, kind, mime, filename: file.name || safeName, size: file.size }, { status: 201 });
+  return json({ key, url, kind, mime, filename: file.name || safeName, size: file.size }, { status: 201 });
 };

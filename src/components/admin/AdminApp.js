@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Routes, Route, NavLink, useNavigate } from 'react-router-dom';
-import { FileText, MessageSquare, Inbox, Plus, ShieldAlert, ArrowLeft, LogOut } from 'lucide-react';
+import { NavLink, Route, Routes } from 'react-router-dom';
+import { ArrowUpRight, SignOut } from '@phosphor-icons/react';
 import { admin, setAdminToken } from '../../lib/api';
-import GlassButton from '../ui/GlassButton';
+import ThemeToggle from '../ui/ThemeToggle';
+import { Button, input } from './ui';
 import PostsAdmin from './PostsAdmin';
 import PostEditor from './PostEditor';
+import PapersAdmin from './PapersAdmin';
+import PaperEditor from './PaperEditor';
 import CommentsAdmin from './CommentsAdmin';
 import MessagesAdmin from './MessagesAdmin';
 
@@ -24,81 +27,89 @@ const AccessGate = ({ onAuthed }) => {
       onAuthed();
     } catch {
       setAdminToken('');
-      setError('Invalid token.');
+      setError('That token did not work.');
       setChecking(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 text-center">
-      <ShieldAlert size={40} className="text-text-3 mb-6" />
-      <h1 className="font-display text-2xl text-white font-semibold mb-3">Admin access</h1>
-      <p className="text-text-2 text-sm max-w-md mb-6">
-        Enter your admin token to sign in. (Cloudflare Access, if configured, signs you in
-        automatically.)
-      </p>
-      <form onSubmit={submit} className="w-full max-w-xs space-y-3">
+    <main className="min-h-[100svh] flex items-center justify-center px-6">
+      <form onSubmit={submit} className="w-full max-w-xs text-center">
+        <p className="label">Console</p>
+        <h1 className="mt-3 font-serif text-[30px] tracking-[-0.02em]">Sign in</h1>
         <input
           type="password"
           value={token}
           onChange={(e) => setToken(e.target.value)}
           placeholder="Admin token"
           autoFocus
-          className="w-full bg-transparent border border-white/[0.1] rounded-xl px-4 py-3 text-sm text-white placeholder:text-text-3 focus:border-white/25 focus:outline-none font-mono text-center"
+          className={`${input} mt-6 text-center font-mono`}
         />
-        {error && <p className="font-mono text-xs text-red-400">{error}</p>}
-        <GlassButton type="submit" variant="primary" className="w-full" disabled={checking}>
-          {checking ? 'Checking…' : 'Sign in'}
-        </GlassButton>
+        {error && <p className="mt-2 text-[12.5px] text-warn-fg">{error}</p>}
+        <Button type="submit" className="w-full mt-3" disabled={checking}>
+          {checking ? 'Checking' : 'Sign in'}
+        </Button>
+        <a href="/" className="mt-8 inline-block text-[13px] text-ink-2 hover:text-ink">
+          Back to the site
+        </a>
       </form>
-      <a href="/" className="mt-8 flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-text-2 hover:text-white">
-        <ArrowLeft size={13} /> Home
-      </a>
-    </div>
+    </main>
   );
 };
 
-const navItem = ({ isActive }) =>
-  `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
-    isActive ? 'bg-white/[0.08] text-white' : 'text-text-2 hover:text-white hover:bg-white/[0.04]'
+const tab = ({ isActive }) =>
+  `press h-8 px-3 inline-flex items-center rounded-md text-[13.5px] transition-colors ${
+    isActive ? 'bg-ink/[0.07] text-ink' : 'text-ink-2 hover:text-ink'
   }`;
 
-const AdminLayout = ({ children }) => {
-  const navigate = useNavigate();
-  return (
-    <div className="min-h-screen pt-24 max-w-6xl mx-auto px-4 md:px-6 grid md:grid-cols-[200px_1fr] gap-6">
-      <aside className="md:sticky md:top-24 h-max">
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-text-3 mb-3 px-3">Console</p>
-        <nav className="space-y-1">
-          <NavLink to="/admin" end className={navItem}><FileText size={15} /> Posts</NavLink>
-          <NavLink to="/admin/comments" className={navItem}><MessageSquare size={15} /> Comments</NavLink>
-          <NavLink to="/admin/messages" className={navItem}><Inbox size={15} /> Messages</NavLink>
+const AdminLayout = ({ children }) => (
+  <div className="min-h-[100svh]">
+    <header className="sticky top-0 z-30 bg-canvas/85 backdrop-blur-md border-b border-line/70">
+      <div className="max-w-5xl mx-auto h-14 px-4 sm:px-6 flex items-center justify-between gap-4">
+        <nav className="flex items-center gap-1 overflow-x-auto">
+          <span className="font-serif text-[18px] tracking-tight mr-3 hidden sm:inline">Console</span>
+          <NavLink to="/admin" end className={tab}>
+            Writing
+          </NavLink>
+          <NavLink to="/admin/papers" className={tab}>
+            Papers
+          </NavLink>
+          <NavLink to="/admin/comments" className={tab}>
+            Comments
+          </NavLink>
+          <NavLink to="/admin/messages" className={tab}>
+            Messages
+          </NavLink>
         </nav>
-        <button
-          onClick={() => navigate('/admin/new')}
-          className="mt-4 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-white/[0.1] bg-white/[0.04] hover:bg-white/[0.08] text-sm text-white transition-colors"
-        >
-          <Plus size={15} /> New Post
-        </button>
-        <button
-          onClick={() => {
-            setAdminToken('');
-            window.location.reload();
-          }}
-          className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-text-3 hover:text-white text-xs transition-colors"
-        >
-          <LogOut size={13} /> Sign out
-        </button>
-      </aside>
-      <main className="pb-24">{children}</main>
-    </div>
-  );
-};
+        <div className="flex items-center gap-1 shrink-0">
+          <a href="/" className="hidden sm:inline-flex items-center gap-1 h-8 px-2 text-[13px] text-ink-2 hover:text-ink">
+            Site <ArrowUpRight size={12} weight="bold" />
+          </a>
+          <ThemeToggle />
+          <button
+            type="button"
+            title="Sign out"
+            aria-label="Sign out"
+            onClick={() => {
+              setAdminToken('');
+              window.location.reload();
+            }}
+            className="press w-8 h-8 inline-flex items-center justify-center rounded-md text-ink-2 hover:text-ink hover:bg-ink/[0.06]"
+          >
+            <SignOut size={16} weight="bold" />
+          </button>
+        </div>
+      </div>
+    </header>
+    <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-10 pb-24">{children}</main>
+  </div>
+);
 
 const AdminApp = () => {
   const [state, setState] = useState('checking'); // checking | ok | denied
 
   useEffect(() => {
+    document.title = 'Console — Naol Demisse';
     admin
       .me()
       .then(() => setState('ok'))
@@ -107,8 +118,8 @@ const AdminApp = () => {
 
   if (state === 'checking') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="font-mono text-sm text-text-3">Verifying access…</p>
+      <div className="min-h-[100svh] flex items-center justify-center">
+        <span className="label animate-pulse">Checking access</span>
       </div>
     );
   }
@@ -120,6 +131,9 @@ const AdminApp = () => {
         <Route index element={<PostsAdmin />} />
         <Route path="new" element={<PostEditor />} />
         <Route path="edit/:id" element={<PostEditor />} />
+        <Route path="papers" element={<PapersAdmin />} />
+        <Route path="papers/new" element={<PaperEditor />} />
+        <Route path="papers/:id" element={<PaperEditor />} />
         <Route path="comments" element={<CommentsAdmin />} />
         <Route path="messages" element={<MessagesAdmin />} />
       </Routes>

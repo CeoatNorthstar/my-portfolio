@@ -1,25 +1,23 @@
 // Lightweight client for the Pages Functions API.
+import { store } from './storage';
 
 const CLIENT_KEY = 'sc_client_id';
 
-// Stable anonymous id for like/favorite dedupe.
+// Stable anonymous id for like/favorite dedupe and comment aliases.
 export const getClientId = () => {
-  let id = localStorage.getItem(CLIENT_KEY);
+  let id = store.get(CLIENT_KEY);
   if (!id) {
     id = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`)
       .replace(/[^a-zA-Z0-9_-]/g, '')
       .slice(0, 64);
-    localStorage.setItem(CLIENT_KEY, id);
+    store.set(CLIENT_KEY, id);
   }
   return id;
 };
 
 const ADMIN_TOKEN_KEY = 'sc_admin_token';
-export const getAdminToken = () => localStorage.getItem(ADMIN_TOKEN_KEY) || '';
-export const setAdminToken = (t) => {
-  if (t) localStorage.setItem(ADMIN_TOKEN_KEY, t);
-  else localStorage.removeItem(ADMIN_TOKEN_KEY);
-};
+export const getAdminToken = () => store.get(ADMIN_TOKEN_KEY, '');
+export const setAdminToken = (t) => store.set(ADMIN_TOKEN_KEY, t || null);
 
 // Attach the admin token header on admin API calls (Access works without it too).
 const adminHeaders = (path) => {
@@ -29,93 +27,75 @@ const adminHeaders = (path) => {
 
 const request = async (path, options = {}) => {
   const res = await fetch(path, {
+    ...options,
     headers: {
       'Content-Type': 'application/json',
       ...adminHeaders(path),
       ...(options.headers || {}),
     },
-    ...options,
   });
   let data = null;
   try {
     data = await res.json();
   } catch {
-    /* non-JSON (e.g. media) */
+    /* non-JSON */
   }
   if (!res.ok) {
-    const message = (data && data.error) || `Request failed (${res.status})`;
-    const err = new Error(message);
+    const err = new Error((data && data.error) || `Request failed (${res.status})`);
     err.status = res.status;
     throw err;
   }
   return data;
 };
 
-export const getConfig = () => request('/api/config');
+const post = (path, body) => request(path, { method: 'POST', body: JSON.stringify(body || {}) });
+const cid = () => encodeURIComponent(getClientId());
 
 // ── Public ──
-export const listPosts = ({ type = 'all', q = '' } = {}) => {
-  const params = new URLSearchParams();
-  if (type && type !== 'all') params.set('type', type);
-  if (q) params.set('q', q);
-  const qs = params.toString();
-  return request(`/api/posts${qs ? `?${qs}` : ''}`);
-};
+export const getHome = () => request('/api/home');
+export const listPosts = (q = '') => request(`/api/posts${q ? `?q=${encodeURIComponent(q)}` : ''}`);
+export const listFavorites = () => request(`/api/favorites?cid=${cid()}`);
+export const getPost = (slug) => request(`/api/posts/${encodeURIComponent(slug)}?cid=${cid()}`);
+export const listPapers = () => request('/api/papers');
+export const getPaper = (slug) => request(`/api/papers/${encodeURIComponent(slug)}`);
+export const getPreview = (path) => request(`/api/preview?path=${encodeURIComponent(path)}`);
 
-export const getLatestPost = () => request('/api/posts/latest');
-
-export const getPost = (slug) =>
-  request(`/api/posts/${encodeURIComponent(slug)}?cid=${encodeURIComponent(getClientId())}`);
-
-export const getComments = (postId) =>
-  request(`/api/posts/${encodeURIComponent(postId)}/comments`);
-
+export const getComments = (postId, before) =>
+  request(`/api/posts/${encodeURIComponent(postId)}/comments?limit=10${before ? `&before=${before}` : ''}`);
 export const postComment = (postId, payload) =>
-  request(`/api/posts/${encodeURIComponent(postId)}/comments`, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
-
+  post(`/api/posts/${encodeURIComponent(postId)}/comments`, { ...payload, clientId: getClientId() });
 export const toggleLike = (postId) =>
-  request(`/api/posts/${encodeURIComponent(postId)}/like`, {
-    method: 'POST',
-    body: JSON.stringify({ clientId: getClientId() }),
-  });
-
+  post(`/api/posts/${encodeURIComponent(postId)}/like`, { clientId: getClientId() });
 export const toggleFavorite = (postId) =>
-  request(`/api/posts/${encodeURIComponent(postId)}/favorite`, {
-    method: 'POST',
-    body: JSON.stringify({ clientId: getClientId() }),
-  });
+  post(`/api/posts/${encodeURIComponent(postId)}/favorite`, { clientId: getClientId() });
 
-export const sendContact = (payload) =>
-  request('/api/contact', { method: 'POST', body: JSON.stringify(payload) });
+export const sendContact = (payload) => post('/api/contact', payload);
 
-export const createCheckoutSession = () =>
-  request('/api/stripe/checkout-session', { method: 'POST', body: '{}' });
+// ── Admin (token or Cloudflare Access gated) ──
+const put = (path, body) => request(path, { method: 'PUT', body: JSON.stringify(body) });
+const del = (path) => request(path, { method: 'DELETE' });
 
-// ── Admin (Cloudflare Access gated) ──
 export const admin = {
   me: () => request('/api/admin/me'),
   listPosts: () => request('/api/admin/posts'),
   getPost: (id) => request(`/api/admin/posts/${id}`),
-  createPost: (payload) =>
-    request('/api/admin/posts', { method: 'POST', body: JSON.stringify(payload) }),
-  updatePost: (id, payload) =>
-    request(`/api/admin/posts/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
-  deletePost: (id) => request(`/api/admin/posts/${id}`, { method: 'DELETE' }),
-  listComments: (status = 'pending') => request(`/api/admin/comments?status=${status}`),
+  createPost: (payload) => post('/api/admin/posts', payload),
+  updatePost: (id, payload) => put(`/api/admin/posts/${id}`, payload),
+  deletePost: (id) => del(`/api/admin/posts/${id}`),
+  listPapers: () => request('/api/admin/papers'),
+  getPaper: (id) => request(`/api/admin/papers/${id}`),
+  createPaper: (payload) => post('/api/admin/papers', payload),
+  updatePaper: (id, payload) => put(`/api/admin/papers/${id}`, payload),
+  deletePaper: (id) => del(`/api/admin/papers/${id}`),
+  linkables: () => request('/api/admin/linkables'),
+  listComments: () => request('/api/admin/comments?status=all'),
   setCommentApproved: (id, approved) =>
-    request(`/api/admin/comments/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ approved }),
-    }),
-  deleteComment: (id) => request(`/api/admin/comments/${id}`, { method: 'DELETE' }),
+    request(`/api/admin/comments/${id}`, { method: 'PATCH', body: JSON.stringify({ approved }) }),
+  deleteComment: (id) => del(`/api/admin/comments/${id}`),
   listMessages: () => request('/api/admin/messages'),
-  upload: async (file, postId = null) => {
+  upload: async (file) => {
     const form = new FormData();
     form.append('file', file);
-    if (postId) form.append('post_id', postId);
     const token = getAdminToken();
     const res = await fetch('/api/admin/upload', {
       method: 'POST',

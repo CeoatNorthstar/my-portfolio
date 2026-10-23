@@ -1,87 +1,60 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Check, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { admin } from '../../lib/api';
-import { formatDate } from '../../lib/format';
+import { timeAgo } from '../../lib/format';
+import { Button, Empty, PageHeader } from './ui';
 
 const CommentsAdmin = () => {
-  const [filter, setFilter] = useState('pending');
-  const [comments, setComments] = useState(null);
+  const [items, setItems] = useState(null);
 
-  const load = useCallback(() => {
-    setComments(null);
-    admin.listComments(filter).then((d) => setComments(d.comments)).catch(() => setComments([]));
-  }, [filter]);
-
+  const load = () => admin.listComments().then((d) => setItems(d.comments)).catch(() => setItems([]));
   useEffect(() => {
     load();
-  }, [load]);
+  }, []);
 
-  const approve = async (c) => {
+  const toggle = async (c) => {
     await admin.setCommentApproved(c.id, !c.approved);
     load();
   };
   const remove = async (c) => {
     // eslint-disable-next-line no-alert
-    if (!window.confirm('Delete this comment?')) return;
+    if (!window.confirm('Delete this comment for good?')) return;
     await admin.deleteComment(c.id);
     load();
   };
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="font-display text-2xl text-white font-semibold">Comments</h1>
-        <div className="flex gap-2">
-          {['pending', 'all'].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 rounded-full font-mono text-[10px] uppercase tracking-wider border transition-colors ${
-                filter === f ? 'text-white border-white/20 bg-white/[0.08]' : 'text-text-3 border-white/[0.06]'
-              }`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {comments === null ? (
-        <p className="font-mono text-sm text-text-3">Loading…</p>
-      ) : comments.length === 0 ? (
-        <p className="font-mono text-sm text-text-3">Nothing here.</p>
-      ) : (
-        <div className="space-y-3">
-          {comments.map((c) => (
-            <div key={c.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                <span className="text-white text-sm font-medium">{c.author_name}</span>
-                <span className="font-mono text-[10px] text-text-3">{formatDate(c.created_at)}</span>
-                <span className="font-mono text-[10px] text-text-3">· on {c.post_title || 'unknown'}</span>
-                {c.approved ? (
-                  <span className="px-1.5 py-0.5 rounded font-mono text-[9px] uppercase bg-green-400/10 text-green-300">
-                    approved
-                  </span>
-                ) : null}
+      <PageHeader title="Comments" />
+      <p className="-mt-4 mb-8 text-[13.5px] text-ink-2">
+        Comments go live right away. Hide anything that should not be there, or delete it.
+      </p>
+      {items && items.length === 0 && <Empty>No comments yet.</Empty>}
+      {items && items.length > 0 && (
+        <ul className="divide-y divide-line border-y border-line">
+          {items.map((c) => (
+            <li key={c.id} className={`py-4 flex gap-4 ${c.approved ? '' : 'opacity-55'}`}>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] text-ink-3">
+                  <span className="text-ink font-medium">{c.author_name}</span> on{' '}
+                  <a href={`/blog/${c.post_slug}#comments`} target="_blank" rel="noreferrer" className="link-quiet">
+                    {c.post_title || 'deleted post'}
+                  </a>{' '}
+                  <span className="font-mono">{timeAgo(c.created_at)}</span>
+                  {!c.approved && <span className="ml-2 font-mono uppercase tracking-wider">hidden</span>}
+                </p>
+                <p className="mt-1.5 text-[14.5px] leading-[1.6] text-ink whitespace-pre-wrap break-words">{c.body}</p>
               </div>
-              <p className="text-text-2 text-sm whitespace-pre-wrap mb-3">{c.body}</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => approve(c)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.1] text-text-2 hover:text-white text-xs transition-colors"
-                >
-                  <Check size={13} /> {c.approved ? 'Unapprove' : 'Approve'}
-                </button>
-                <button
-                  onClick={() => remove(c)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.1] text-text-2 hover:text-red-400 text-xs transition-colors"
-                >
-                  <Trash2 size={13} /> Delete
-                </button>
+              <div className="flex items-start gap-1 shrink-0">
+                <Button variant="ghost" className="!h-8 !px-3" onClick={() => toggle(c)}>
+                  {c.approved ? 'Hide' : 'Show'}
+                </Button>
+                <Button variant="danger" className="!h-8 !px-3" onClick={() => remove(c)}>
+                  Delete
+                </Button>
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );

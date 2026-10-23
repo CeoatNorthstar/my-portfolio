@@ -1,46 +1,34 @@
+const token = (name) => `rgb(var(--${name}) / <alpha-value>)`;
+
 module.exports = {
-  content: ["./src/**/*.{js,jsx,ts,tsx}"],
+  content: ['./src/**/*.{js,jsx}', './public/index.html'],
   darkMode: ['class', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
-        // Channel-based so alpha utilities (e.g. bg-white/[0.03]) stay theme-aware.
-        white: 'rgb(var(--c-white) / <alpha-value>)',
-        black: 'rgb(var(--c-black) / <alpha-value>)',
-        void: 'rgb(var(--c-void) / <alpha-value>)',
-        primary: 'rgb(var(--c-primary) / <alpha-value>)',
-        elevated: 'rgb(var(--c-elevated) / <alpha-value>)',
-        surface: 'rgb(var(--c-surface) / <alpha-value>)',
-        hover: 'rgb(var(--c-hover) / <alpha-value>)',
-        star: 'rgb(var(--c-star) / <alpha-value>)',
-        'text-1': 'rgb(var(--c-text-1) / <alpha-value>)',
-        'text-2': 'rgb(var(--c-text-2) / <alpha-value>)',
-        'text-3': 'rgb(var(--c-text-3) / <alpha-value>)',
+        canvas: token('canvas'),
+        card: token('card'),
+        sunk: token('sunk'),
+        line: token('line'),
+        ink: token('ink'),
+        'ink-2': token('ink-2'),
+        'ink-3': token('ink-3'),
+        'new-bg': token('new-bg'),
+        'new-fg': token('new-fg'),
+        'warn-bg': token('warn-bg'),
+        'warn-fg': token('warn-fg'),
       },
       fontFamily: {
-        mono: ['"JetBrains Mono"', '"Fira Code"', 'monospace'],
-        sans: ['"Inter"', 'system-ui', 'sans-serif'],
-        display: ['"Space Grotesk"', 'sans-serif'],
+        sans: ['Geist', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
+        serif: ['Newsreader', 'Iowan Old Style', 'Georgia', 'serif'],
+        mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
-      animation: {
-        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'glow': 'glow 2s ease-in-out infinite alternate',
-        'float': 'float 6s ease-in-out infinite',
-        'shimmer': 'shimmer 2s ease-in-out infinite',
+      boxShadow: {
+        card: 'var(--shadow-card)',
+        lift: 'var(--shadow-lift)',
       },
-      keyframes: {
-        glow: {
-          '0%': { opacity: '0.4' },
-          '100%': { opacity: '1' },
-        },
-        float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-10px)' },
-        },
-        shimmer: {
-          '0%, 100%': { opacity: '0.3' },
-          '50%': { opacity: '0.6' },
-        },
+      transitionTimingFunction: {
+        out: 'cubic-bezier(0.16, 1, 0.3, 1)',
       },
     },
   },

@@ -1,40 +1,36 @@
 import { useEffect, useState } from 'react';
-import { Mail } from 'lucide-react';
 import { admin } from '../../lib/api';
 import { formatDate } from '../../lib/format';
+import { Empty, PageHeader } from './ui';
 
 const MessagesAdmin = () => {
-  const [messages, setMessages] = useState(null);
-
+  const [items, setItems] = useState(null);
   useEffect(() => {
-    admin.listMessages().then((d) => setMessages(d.messages)).catch(() => setMessages([]));
+    admin
+      .listMessages()
+      .then((d) => setItems(d.messages))
+      .catch(() => setItems([]));
   }, []);
 
   return (
     <div>
-      <h1 className="font-display text-2xl text-white font-semibold mb-6">Messages</h1>
-      {messages === null ? (
-        <p className="font-mono text-sm text-text-3">Loading…</p>
-      ) : messages.length === 0 ? (
-        <p className="font-mono text-sm text-text-3">No messages yet.</p>
-      ) : (
-        <div className="space-y-3">
-          {messages.map((m) => (
-            <div key={m.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-              <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
-                <span className="text-white text-sm font-medium">{m.name}</span>
-                <span className="font-mono text-[10px] text-text-3">{formatDate(m.created_at)}</span>
+      <PageHeader title="Messages" />
+      {items && items.length === 0 && <Empty>No notes yet.</Empty>}
+      {items && items.length > 0 && (
+        <ul className="divide-y divide-line border-y border-line">
+          {items.map((m) => (
+            <li key={m.id} className="py-5">
+              <div className="flex items-baseline justify-between gap-4">
+                <a href={`mailto:${m.email}`} className="text-[14px] text-ink font-medium link-quiet">
+                  {m.name !== 'Anonymous' ? `${m.name} · ` : ''}
+                  {m.email}
+                </a>
+                <span className="font-mono text-[11px] text-ink-3 shrink-0">{formatDate(m.created_at)}</span>
               </div>
-              <a
-                href={`mailto:${m.email}`}
-                className="inline-flex items-center gap-1.5 font-mono text-[11px] text-text-2 hover:text-white mb-3"
-              >
-                <Mail size={12} /> {m.email}
-              </a>
-              <p className="text-text-2 text-sm whitespace-pre-wrap leading-relaxed">{m.body}</p>
-            </div>
+              <p className="mt-2 text-[14.5px] leading-[1.6] text-ink whitespace-pre-wrap break-words">{m.body}</p>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );

@@ -1,105 +1,168 @@
-import { useEffect, useState, useCallback } from 'react';
-import { MessageCircle } from 'lucide-react';
-import GlassButton from '../ui/GlassButton';
-import Turnstile from '../ui/Turnstile';
-import { getComments, postComment } from '../../lib/api';
-import { formatDate } from '../../lib/format';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { getClientId, getComments, postComment } from '../../lib/api';
+import { anonymousAlias } from '../../lib/alias';
+import { timeAgo } from '../../lib/format';
 
-const Comments = ({ postId }) => {
-  const [comments, setComments] = useState([]);
-  const [name, setName] = useState('');
+/**
+ * Anonymous comments. Nothing loads until the section scrolls into view, and
+ * only the newest page comes down; older ones stay archived on the server
+ * until someone asks for them.
+ */
+const Comments = ({ postId, initialCount = 0 }) => {
+  const sectionRef = useRef(null);
+  const [visible, setVisible] = useState(false);
+  const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(initialCount);
+  const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
   const [body, setBody] = useState('');
-  const [token, setToken] = useState('');
-  const [status, setStatus] = useState('idle'); // idle | sending | done | error
+  const [name, setName] = useState('');
+  const [honey, setHoney] = useState('');
+  const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
 
-  const load = useCallback(() => {
-    getComments(postId)
-      .then((d) => setComments(d.comments || []))
-      .catch(() => {});
-  }, [postId]);
+  const alias = useMemo(() => anonymousAlias(getClientId()), []);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    const el = sectionRef.current;
+    if (!el) return undefined;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: '300px 0px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const load = useCallback(
+    async (before) => {
+      setLoading(true);
+      try {
+        const d = await getComments(postId, before);
+        setItems((prev) => (before ? [...prev, ...d.comments] : d.comments));
+        setHasMore(d.hasMore);
+        setTotal(d.total);
+        setLoaded(true);
+      } catch {
+        setError('Comments are resting. Try again shortly.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [postId]
+  );
+
+  useEffect(() => {
+    if (visible) load();
+  }, [visible, load]);
 
   const submit = async (e) => {
     e.preventDefault();
+    if (!body.trim()) return;
+    setSending(true);
     setError('');
-    if (!name.trim() || !body.trim()) return;
-    if (!token) {
-      setError('Please complete the verification.');
-      return;
-    }
-    setStatus('sending');
     try {
-      await postComment(postId, { author_name: name, body, turnstileToken: token });
-      setStatus('done');
-      setName('');
+      const d = await postComment(postId, { body, author_name: name, website: honey });
+      if (d.comment) {
+        setItems((prev) => [d.comment, ...prev]);
+        setTotal((t) => t + 1);
+      }
       setBody('');
-      setToken('');
     } catch (err) {
-      setError(err.message || 'Failed to submit.');
-      setStatus('error');
+      setError(err.message);
+    } finally {
+      setSending(false);
     }
   };
 
-  const inputClasses =
-    'w-full bg-transparent border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder:text-text-3 focus:border-white/20 focus:outline-none transition-colors font-sans';
+  const archived = Math.max(0, total - items.length);
 
   return (
-    <section className="mt-16 max-w-2xl">
-      <h2 className="flex items-center gap-2 font-display text-xl text-white font-semibold mb-6">
-        <MessageCircle size={18} /> Comments
-      </h2>
-
-      {/* Existing comments */}
-      <div className="space-y-4 mb-10">
-        {comments.length === 0 && (
-          <p className="font-mono text-xs text-text-3">Be the first to comment.</p>
-        )}
-        {comments.map((c) => (
-          <div key={c.id} className="border-l-2 border-white/[0.08] pl-4">
-            <div className="flex items-center gap-3 mb-1">
-              <span className="text-sm text-white font-medium">{c.author_name}</span>
-              <span className="font-mono text-[10px] text-text-3">{formatDate(c.created_at)}</span>
-            </div>
-            <p className="text-text-2 text-sm whitespace-pre-wrap leading-relaxed">{c.body}</p>
-          </div>
-        ))}
+    <section ref={sectionRef} id="comments" className="scroll-mt-20">
+      <div className="flex items-baseline justify-between">
+        <h2 className="font-serif text-[24px] tracking-[-0.015em] text-ink">Comments</h2>
+        <span className="label">{total}</span>
       </div>
 
-      {/* Form */}
-      {status === 'done' ? (
-        <div className="rounded-xl border border-green-400/20 bg-green-400/[0.05] px-4 py-5 text-center">
-          <p className="font-mono text-sm text-green-400">
-            Thanks! Your comment is awaiting approval.
-          </p>
-        </div>
-      ) : (
-        <form onSubmit={submit} className="space-y-3">
+      <form onSubmit={submit} className="mt-5 rounded-lg border border-line bg-card focus-within:border-ink/25 transition-colors">
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          rows={3}
+          maxLength={2000}
+          placeholder="Add to the conversation. No account needed."
+          className="block w-full bg-transparent resize-none px-4 pt-3.5 pb-2 text-[15px] leading-[1.6] text-ink placeholder:text-ink-3 focus:outline-none"
+        />
+        <input
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          className="hidden"
+          value={honey}
+          onChange={(e) => setHoney(e.target.value)}
+        />
+        <div className="flex items-center justify-between gap-3 px-3 pb-3 pt-1">
           <input
-            type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Your name"
-            required
-            className={inputClasses}
+            maxLength={40}
+            placeholder={`Posting as ${alias}`}
+            aria-label="Name (optional)"
+            className="min-w-0 flex-1 bg-transparent px-1 text-[13px] text-ink placeholder:text-ink-3 focus:outline-none"
           />
-          <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder="Share your thoughts..."
-            rows={4}
-            required
-            className={`${inputClasses} resize-none`}
-          />
-          <Turnstile onToken={setToken} />
-          {error && <p className="font-mono text-xs text-red-400">{error}</p>}
-          <GlassButton type="submit" variant="primary" disabled={status === 'sending'}>
-            {status === 'sending' ? 'Posting…' : 'Post Comment'}
-          </GlassButton>
-        </form>
+          <button
+            type="submit"
+            disabled={sending || !body.trim()}
+            className="press h-8 px-3.5 rounded-md bg-ink text-canvas text-[13px] hover:bg-ink/85 disabled:opacity-40"
+          >
+            {sending ? 'Posting' : 'Post'}
+          </button>
+        </div>
+      </form>
+      {error && <p className="mt-2 text-[12.5px] text-warn-fg">{error}</p>}
+
+      <ul className="mt-8 divide-y divide-line">
+        <AnimatePresence initial={false}>
+          {items.map((c) => (
+            <motion.li
+              key={c.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="py-5"
+            >
+              <div className="flex items-baseline gap-3">
+                <span className="text-[13.5px] font-medium text-ink">{c.author_name}</span>
+                <span className="font-mono text-[10.5px] text-ink-3">{timeAgo(c.created_at)}</span>
+              </div>
+              <p className="mt-1.5 text-[15px] leading-[1.65] text-ink whitespace-pre-wrap break-words">{c.body}</p>
+            </motion.li>
+          ))}
+        </AnimatePresence>
+      </ul>
+
+      {loaded && items.length === 0 && (
+        <p className="py-4 font-serif italic text-[17px] text-ink-2">Quiet so far. Say the first thing.</p>
+      )}
+      {!loaded && loading && <p className="py-4 label">Loading comments</p>}
+      {hasMore && (
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => load(items[items.length - 1]?.created_at)}
+          className="press mt-2 h-9 px-4 rounded-md border border-line text-[13px] text-ink-2 hover:text-ink hover:border-ink/25 disabled:opacity-50"
+        >
+          {loading ? 'Opening the archive' : `Show archived comments (${archived})`}
+        </button>
       )}
     </section>
   );
