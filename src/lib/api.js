@@ -52,7 +52,17 @@ const post = (path, body) => request(path, { method: 'POST', body: JSON.stringif
 const cid = () => encodeURIComponent(getClientId());
 
 // ── Public ──
-export const getHome = () => request('/api/home');
+// Shared by the card and the banner, so the page asks only once.
+let homeRequest = null;
+export const getHome = () => {
+  if (!homeRequest) {
+    homeRequest = request('/api/home').catch((err) => {
+      homeRequest = null;
+      throw err;
+    });
+  }
+  return homeRequest;
+};
 export const listPosts = (q = '') => request(`/api/posts${q ? `?q=${encodeURIComponent(q)}` : ''}`);
 export const listFavorites = () => request(`/api/favorites?cid=${cid()}`);
 export const getPost = (slug) => request(`/api/posts/${encodeURIComponent(slug)}?cid=${cid()}`);

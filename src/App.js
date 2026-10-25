@@ -4,6 +4,7 @@ import Home from './components/home/Home';
 import NotFound from './components/NotFound';
 import Eggs from './components/eggs/Eggs';
 import { DataFloat } from './components/data/DataViewer';
+import NewBanner from './components/ui/NewBanner';
 
 // Full pages and the admin console load on demand.
 const PostPage = lazy(() => import('./components/blog/PostPage'));
@@ -36,6 +37,7 @@ function App() {
       <AdminHostRedirect />
       {!isAdmin && <Eggs />}
       {!isAdmin && <DataFloat />}
+      {!isAdmin && <NewBanner />}
       <Suspense fallback={<Loading />}>
         <Routes>
           <Route path="/" element={<Home />} />
