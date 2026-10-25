@@ -3,6 +3,7 @@ import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import Home from './components/home/Home';
 import NotFound from './components/NotFound';
 import Eggs from './components/eggs/Eggs';
+import { DataFloat } from './components/data/DataViewer';
 
 // Full pages and the admin console load on demand.
 const PostPage = lazy(() => import('./components/blog/PostPage'));
@@ -34,6 +35,7 @@ function App() {
     <div className="grain min-h-[100svh] bg-canvas text-ink">
       <AdminHostRedirect />
       {!isAdmin && <Eggs />}
+      {!isAdmin && <DataFloat />}
       <Suspense fallback={<Loading />}>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -42,6 +44,7 @@ function App() {
           <Route path="/donate" element={<Home />} />
           <Route path="/blog" element={<Home />} />
           <Route path="/papers" element={<Home />} />
+          <Route path="/data" element={<Home />} />
           <Route path="/blog/:slug" element={<PostPage />} />
           <Route path="/papers/:slug" element={<PaperPage />} />
           <Route path="/admin/*" element={<AdminApp />} />

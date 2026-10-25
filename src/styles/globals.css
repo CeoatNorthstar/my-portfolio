@@ -26,21 +26,22 @@
   color-scheme: light;
 }
 
+/* Dark is true black: no warm tint, no grain, no glow lifting the blacks. */
 [data-theme='dark'] {
-  --canvas: 23 22 20;
-  --card: 30 29 27;
-  --sunk: 38 37 34;
-  --line: 47 45 42;
-  --ink: 236 234 229;
-  --ink-2: 160 158 152;
-  --ink-3: 112 110 105;
-  --new-bg: 35 48 34;
-  --new-fg: 159 195 154;
-  --warn-bg: 58 32 32;
-  --warn-fg: 240 160 156;
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.2), 0 16px 48px -16px rgb(0 0 0 / 0.5);
-  --shadow-lift: 0 2px 8px rgb(0 0 0 / 0.25);
-  --grain-opacity: 0.05;
+  --canvas: 0 0 0;
+  --card: 9 9 9;
+  --sunk: 17 17 17;
+  --line: 36 36 36;
+  --ink: 242 242 242;
+  --ink-2: 158 158 158;
+  --ink-3: 104 104 104;
+  --new-bg: 16 38 22;
+  --new-fg: 122 212 142;
+  --warn-bg: 48 14 14;
+  --warn-fg: 245 140 135;
+  --shadow-card: 0 0 0 0 transparent;
+  --shadow-lift: 0 0 0 0 transparent;
+  --grain-opacity: 0;
   color-scheme: dark;
 }
 
@@ -100,11 +101,7 @@ button {
     radial-gradient(35% 30% at 70% 65%, rgb(200 215 255 / 0.12), transparent 70%);
   animation: drift 28s ease-in-out infinite alternate;
 }
-[data-theme='dark'] .ambient {
-  background:
-    radial-gradient(40% 35% at 30% 40%, rgb(255 190 120 / 0.05), transparent 70%),
-    radial-gradient(35% 30% at 70% 65%, rgb(140 160 255 / 0.04), transparent 70%);
-}
+[data-theme='dark'] .ambient { display: none; }
 @keyframes drift {
   from { transform: translate3d(-2%, -1%, 0); }
   to { transform: translate3d(2%, 1.5%, 0); }
@@ -319,7 +316,7 @@ dbox-widget { display: block; max-width: 100%; }
 }
 .pdf-page canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .pdf-night .pdf-page canvas { filter: invert(0.88) hue-rotate(180deg) sepia(0.08); }
-.pdf-night .pdf-page { background: #1c1b19; }
+.pdf-night .pdf-page { background: #111; }
 .pdf-hl {
   position: absolute;
   border-radius: 2px;

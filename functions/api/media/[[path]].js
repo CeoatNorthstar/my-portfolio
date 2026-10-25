@@ -27,11 +27,16 @@ export const onRequestGet = async ({ params, request, env }) => {
   headers.set('etag', object.httpEtag);
   headers.set('Cache-Control', 'public, max-age=31536000, immutable');
   headers.set('Accept-Ranges', 'bytes');
+  headers.set('X-Content-Type-Options', 'nosniff');
+  // Never let an uploaded document run script on this origin when opened directly.
+  if (/html|xml|svg|javascript/i.test(headers.get('Content-Type') || '')) {
+    headers.set('Content-Security-Policy', "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:");
+  }
 
   if (rangeMatch && object.range) {
     const total = object.size;
     const start = object.range.suffix !== undefined ? total - object.range.suffix : object.range.offset || 0;
-    const length = object.range.length || total - start;
+    const length = Math.min(object.range.length || total - start, total - start);
     const end = start + length - 1;
     headers.set('Content-Range', `bytes ${start}-${end}/${total}`);
     return new Response(object.body, { status: 206, headers });

@@ -59,6 +59,8 @@ export const getPost = (slug) => request(`/api/posts/${encodeURIComponent(slug)}
 export const listPapers = () => request('/api/papers');
 export const getPaper = (slug) => request(`/api/papers/${encodeURIComponent(slug)}`);
 export const getPreview = (path) => request(`/api/preview?path=${encodeURIComponent(path)}`);
+export const listData = () => request('/api/data');
+export const getData = (slug) => request(`/api/data/${encodeURIComponent(slug)}`);
 
 export const getComments = (postId, before) =>
   request(`/api/posts/${encodeURIComponent(postId)}/comments?limit=10${before ? `&before=${before}` : ''}`);
@@ -88,6 +90,11 @@ export const admin = {
   updatePaper: (id, payload) => put(`/api/admin/papers/${id}`, payload),
   deletePaper: (id) => del(`/api/admin/papers/${id}`),
   linkables: () => request('/api/admin/linkables'),
+  listData: () => request('/api/admin/data'),
+  getData: (id) => request(`/api/admin/data/${id}`),
+  createData: (payload) => post('/api/admin/data', payload),
+  updateData: (id, payload) => put(`/api/admin/data/${id}`, payload),
+  deleteData: (id) => del(`/api/admin/data/${id}`),
   listComments: () => request('/api/admin/comments?status=all'),
   setCommentApproved: (id, approved) =>
     request(`/api/admin/comments/${id}`, { method: 'PATCH', body: JSON.stringify({ approved }) }),

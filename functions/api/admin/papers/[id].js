@@ -70,7 +70,10 @@ export const onRequestPut = async ({ params, request, env }) => {
 export const onRequestDelete = async ({ params, env }) => {
   const row = await env.DB.prepare('SELECT pdf_key FROM papers WHERE id = ?').bind(params.id).first();
   if (!row) return notFound('Paper not found');
-  await env.DB.prepare('DELETE FROM papers WHERE id = ?').bind(params.id).run();
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM papers WHERE id = ?').bind(params.id),
+    env.DB.prepare("DELETE FROM dataset_links WHERE target_type = 'paper' AND target_id = ?").bind(params.id),
+  ]);
   if (row.pdf_key) await env.MEDIA.delete(row.pdf_key).catch(() => {});
   return json({ ok: true });
 };

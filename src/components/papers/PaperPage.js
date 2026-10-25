@@ -7,6 +7,7 @@ import { fileSize, formatDate } from '../../lib/format';
 import useMediaQuery from '../../hooks/useMediaQuery';
 import TopBar from '../ui/TopBar';
 import NotFound from '../NotFound';
+import { SeeData } from '../data/DataViewer';
 
 const Reader = lazy(() => import('./Reader'));
 
@@ -177,6 +178,7 @@ const PaperPage = () => {
               {paper.pdf_size ? <span className="font-mono text-[11px] text-ink-3">{fileSize(paper.pdf_size)}</span> : null}
             </a>
           </div>
+          <SeeData datasets={paper.datasets} className="mt-2" />
 
           {paper.abstract && (
             <section className="mt-12">

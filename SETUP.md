@@ -3,8 +3,8 @@
 React (CRA) frontend + Cloudflare Pages Functions backend on the Pages project
 **`naol`** (Git-connected: every push to `main` deploys to naol.me).
 
-- **D1** `sentinel-blog` (binding `DB`): posts, papers, comments, likes, favorites, messages
-- **R2** `sentinel-media` (binding `MEDIA`): photos, videos, attachments, paper PDFs
+- **D1** `sentinel-blog` (binding `DB`): posts, papers, datasets, comments, likes, favorites, messages
+- **R2** `sentinel-media` (binding `MEDIA`): photos, videos, attachments, paper PDFs, data files
 - **Admin auth:** `ADMIN_TOKEN` secret (and/or Cloudflare Access)
 
 ---
@@ -51,17 +51,23 @@ from there on demand, so it never weighs down the main bundle.
 ---
 
 ## How it fits together
-- **Home** (`/`, `/about`, `/contact`, `/donate`): the business card. Photo, name and
-  role stay put; the area beside the photo changes.
-- **Panels** (`/blog`, `/papers`): open beside the card, close with X, or fill the
-  page with `?full=1` (Back to home in the top left).
+- **Home** (`/`, `/about`, `/contact`): the business card. The interactive spacetime
+  patch, name and role stay put; the area beside them changes. Dark (true black) is
+  the default; only an explicit toggle is remembered (`theme-choice`).
+- **Panels** (`/blog`, `/papers`, `/data`, `/donate`): open beside the card, close
+  with X, or fill the page with `?full=1` (Back to home in the top left).
+- **Data** (`?data=<slug>` on any page): datasets, results and discoveries open in a
+  floating viewer with file tabs. CSV/TSV get a plot + table, JSON/text/code are
+  shown inline, images/video/audio/PDF play in place, anything else downloads.
+  Attach a dataset to posts/papers in the console and they get a See data button.
 - **Post** (`/blog/:slug`): article, sources, likes, saves, anonymous comments
   (newest page loads when you scroll to them; older ones load on request).
   Links to other posts/papers get a hover preview.
 - **Paper** (`/papers/:slug`): title, author, date, abstract, Sources dropdown,
   and the in-page PDF reader (half page, expandable, highlights kept per browser).
   The newest paper is labelled **New** for 7 days.
-- **Console** (`/admin`, or `eda.naol.me`): write posts (photos, video, YouTube,
+- **Console** (`/admin`, or `eda.naol.me`): datasets (files + which posts/papers
+  they belong to), write posts (photos, video, YouTube,
   files, sources, keywords, link-to-my-writing and auto-link), upload papers
   (title, abstract, keywords and references are read from the PDF and stay
   editable), moderate comments, read messages.

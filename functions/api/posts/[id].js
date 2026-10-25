@@ -1,6 +1,7 @@
 import { json, notFound } from '../../_lib/response.js';
 import { resolvePost, withCounts } from '../../_lib/db.js';
 import { clientIdFrom } from '../../_lib/util.js';
+import { datasetsFor } from '../../_lib/datasets.js';
 
 // GET /api/posts/:idOrSlug — single published post with counts + viewer state.
 export const onRequestGet = async ({ params, request, env }) => {
@@ -10,5 +11,5 @@ export const onRequestGet = async ({ params, request, env }) => {
   const url = new URL(request.url);
   const clientId = clientIdFrom(request, url.searchParams.get('cid'));
   const full = await withCounts(env.DB, post, clientId);
-  return json({ post: full });
+  return json({ post: { ...full, datasets: await datasetsFor(env.DB, 'post', post.id) } });
 };

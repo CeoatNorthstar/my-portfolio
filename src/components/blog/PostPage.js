@@ -8,6 +8,7 @@ import TopBar from '../ui/TopBar';
 import NotFound from '../NotFound';
 import ArticleBody from './ArticleBody';
 import Comments from './Comments';
+import { SeeData } from '../data/DataViewer';
 
 const Action = ({ active, onClick, label, children }) => (
   <button
@@ -158,6 +159,7 @@ const PostPage = () => {
               <p className="mt-5 font-serif italic text-[20px] leading-[1.5] text-ink-2">{post.excerpt}</p>
             )}
             <p className="mt-6 text-[13px] text-ink-2">By Naol Demisse</p>
+            <SeeData datasets={post.datasets} className="mt-6" />
           </header>
 
           {post.cover_url && (

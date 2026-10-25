@@ -72,6 +72,7 @@ export const onRequestDelete = async ({ params, env }) => {
     env.DB.prepare('DELETE FROM comments WHERE post_id = ?').bind(params.id),
     env.DB.prepare('DELETE FROM likes WHERE post_id = ?').bind(params.id),
     env.DB.prepare('DELETE FROM favorites WHERE post_id = ?').bind(params.id),
+    env.DB.prepare("DELETE FROM dataset_links WHERE target_type = 'post' AND target_id = ?").bind(params.id),
   ]);
   return json({ ok: true });
 };

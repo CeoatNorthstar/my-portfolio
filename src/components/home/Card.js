@@ -1,31 +1,36 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import photo from '../../assets/naol.jpg';
 import { SITE } from '../../lib/site';
 import ThemeToggle from '../ui/ThemeToggle';
 import Feynman from '../ui/Feynman';
 import CardView from './CardViews';
+import Spacetime from './Spacetime';
 
 export const NAV = [
   { key: 'about', label: 'About' },
   { key: 'blog', label: 'Blog' },
   { key: 'papers', label: 'Papers' },
+  { key: 'data', label: 'Data' },
   { key: 'contact', label: 'Contact' },
   { key: 'donate', label: 'Donate' },
 ];
 
-const Identity = ({ className = '' }) => (
+const Identity = ({ className = '', onHome, onFlip }) => (
   <div className={className}>
-    <h1 className="font-serif text-[26px] sm:text-[31px] leading-[1.05] tracking-[-0.02em] text-ink">{SITE.name}</h1>
+    <h1 className="font-serif text-[26px] sm:text-[31px] leading-[1.05] tracking-[-0.02em] text-ink">
+      <button type="button" onClick={onHome} onDoubleClick={onFlip} className="text-left select-none">
+        {SITE.name}
+      </button>
+    </h1>
     <p className="label mt-2">{SITE.role}</p>
   </div>
 );
 
 /**
- * The business card. Photo, name and role never change; the information
- * area next to the photo swaps with the nav (About, Contact). Blog, Papers
- * and Donate open as a panel beside the card.
- * Double-click the photo to turn the card over.
+ * The business card. The spacetime patch, name and role never change; the
+ * information area beside them swaps with the nav (About, Contact). Blog,
+ * Papers, Data and Donate open as a panel beside the card.
+ * Double-click the name to turn the card over.
  */
 const Card = ({ view, panel, compact, newPaper, onNav, onHome }) => {
   const [flipped, setFlipped] = useState(false);
@@ -48,27 +53,12 @@ const Card = ({ view, panel, compact, newPaper, onNav, onHome }) => {
 
           <div className="flex-1 min-h-0 p-5 sm:p-7 flex flex-col sm:flex-row gap-5 sm:gap-7">
             <div className="flex sm:block items-center gap-4 shrink-0">
-              <button
-                type="button"
-                onClick={onHome}
-                onDoubleClick={() => setFlipped(true)}
-                aria-label="Home"
-                className="block rounded-md overflow-hidden shrink-0 focus-visible:outline-offset-4"
-              >
-                <img
-                  src={photo}
-                  alt={SITE.name}
-                  width="148"
-                  height="184"
-                  draggable="false"
-                  className="w-[68px] h-[68px] sm:w-[148px] sm:h-[184px] object-cover [filter:saturate(0.82)_sepia(0.06)] hover:[filter:none] transition-[filter] duration-500"
-                />
-              </button>
-              <Identity className="sm:hidden" />
+              <Spacetime className="w-[68px] h-[68px] sm:w-[148px] sm:h-[184px] shrink-0" />
+              <Identity className="sm:hidden" onHome={onHome} onFlip={() => setFlipped(true)} />
             </div>
 
             <div className="flex-1 min-w-0 flex flex-col">
-              <Identity className="hidden sm:block pr-14" />
+              <Identity className="hidden sm:block pr-14" onHome={onHome} onFlip={() => setFlipped(true)} />
               <div className="hidden sm:block w-8 h-px bg-ink/20 my-5" />
               <div className="relative flex-1 min-h-0">
                 <AnimatePresence mode="wait" initial={false}>
@@ -95,7 +85,7 @@ const Card = ({ view, panel, compact, newPaper, onNav, onHome }) => {
                     type="button"
                     onClick={() => onNav(item.key)}
                     aria-current={isActive(item.key) ? 'true' : undefined}
-                    className={`press relative px-[7px] sm:px-3 h-8 rounded-md text-[13px] sm:text-[13.5px] whitespace-nowrap transition-colors ${
+                    className={`press relative px-[5px] sm:px-3 h-8 rounded-md text-[12.5px] sm:text-[13.5px] whitespace-nowrap transition-colors ${
                       isActive(item.key) ? 'text-ink' : 'text-ink-2 hover:text-ink'
                     }`}
                   >
@@ -105,8 +95,8 @@ const Card = ({ view, panel, compact, newPaper, onNav, onHome }) => {
                     )}
                     {isActive(item.key) && (
                       <motion.span
-                        layoutId={['blog', 'papers', 'donate'].includes(item.key) ? 'nav-panel' : 'nav-view'}
-                        className="absolute left-[7px] right-[7px] sm:left-3 sm:right-3 bottom-[3px] h-px bg-ink"
+                        layoutId={['blog', 'papers', 'data', 'donate'].includes(item.key) ? 'nav-panel' : 'nav-view'}
+                        className="absolute left-[5px] right-[5px] sm:left-3 sm:right-3 bottom-[3px] h-px bg-ink"
                         transition={{ type: 'spring', stiffness: 500, damping: 40 }}
                       />
                     )}

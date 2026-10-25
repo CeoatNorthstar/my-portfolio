@@ -10,6 +10,8 @@ import PapersAdmin from './PapersAdmin';
 import PaperEditor from './PaperEditor';
 import CommentsAdmin from './CommentsAdmin';
 import MessagesAdmin from './MessagesAdmin';
+import DataAdmin from './DataAdmin';
+import DataEditor from './DataEditor';
 
 const AccessGate = ({ onAuthed }) => {
   const [token, setToken] = useState('');
@@ -74,6 +76,9 @@ const AdminLayout = ({ children }) => (
           <NavLink to="/admin/papers" className={tab}>
             Papers
           </NavLink>
+          <NavLink to="/admin/data" className={tab}>
+            Data
+          </NavLink>
           <NavLink to="/admin/comments" className={tab}>
             Comments
           </NavLink>
@@ -134,6 +139,9 @@ const AdminApp = () => {
         <Route path="papers" element={<PapersAdmin />} />
         <Route path="papers/new" element={<PaperEditor />} />
         <Route path="papers/:id" element={<PaperEditor />} />
+        <Route path="data" element={<DataAdmin />} />
+        <Route path="data/new" element={<DataEditor />} />
+        <Route path="data/:id" element={<DataEditor />} />
         <Route path="comments" element={<CommentsAdmin />} />
         <Route path="messages" element={<MessagesAdmin />} />
       </Routes>

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChatCircle, Heart } from '@phosphor-icons/react';
-import { listFavorites, listPapers, listPosts } from '../../lib/api';
+import { listData, listFavorites, listPapers, listPosts } from '../../lib/api';
+import { KIND_LABELS, useOpenData } from '../data/DataViewer';
 import { formatDate } from '../../lib/format';
 import Skeleton from '../ui/Skeleton';
 
@@ -155,6 +156,39 @@ export const PaperList = ({ large = false }) => {
               <p className="mt-2.5 text-[14.5px] leading-[1.6] text-ink-2 line-clamp-3">{p.abstract}</p>
             )}
           </Link>
+        </motion.li>
+      ))}
+    </ul>
+  );
+};
+
+export const DataList = ({ large = false }) => {
+  const { items, error } = useList('data', listData, (d) => d.datasets);
+  const open = useOpenData();
+
+  if (!items && !error) return <Skeleton />;
+  if (error && !items) return <Empty>{error}</Empty>;
+  if (!items.length) return <Empty>No data yet. The first numbers are still being measured.</Empty>;
+
+  return (
+    <ul className="divide-y divide-line -mt-6">
+      {items.map((d, i) => (
+        <motion.li key={d.id} {...reveal(i)}>
+          <button type="button" onClick={() => open(d.slug)} className="group block w-full text-left py-6">
+            <p className="label">
+              {KIND_LABELS[d.kind] || 'Data'} {'\u00b7'} {formatDate(d.published_at)} {'\u00b7'} {d.files} file
+              {d.files === 1 ? '' : 's'}
+              {d.links > 0 ? ` \u00b7 used in ${d.links}` : ''}
+            </p>
+            <h3
+              className={`mt-2 font-serif tracking-[-0.015em] leading-[1.2] text-ink decoration-ink/30 underline-offset-4 group-hover:underline ${
+                large ? 'text-[26px]' : 'text-[21px]'
+              }`}
+            >
+              {d.title}
+            </h3>
+            {d.summary && <p className="mt-2 text-[14.5px] leading-[1.6] text-ink-2 line-clamp-2">{d.summary}</p>}
+          </button>
         </motion.li>
       ))}
     </ul>

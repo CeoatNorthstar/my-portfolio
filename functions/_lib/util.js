@@ -20,7 +20,7 @@ export const slugify = (text) =>
 
 // Ensure a slug is unique within a table (append -2, -3, ... if taken).
 export const uniqueSlug = async (db, base, excludeId = null, table = 'posts') => {
-  if (!['posts', 'papers'].includes(table)) throw new Error('Unknown table');
+  if (!['posts', 'papers', 'datasets'].includes(table)) throw new Error('Unknown table');
   let slug = base;
   let n = 1;
   /* eslint-disable no-await-in-loop */

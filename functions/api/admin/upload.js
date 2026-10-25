@@ -6,9 +6,9 @@ const ALLOWED = [
   /^image\//,
   /^video\//,
   /^audio\//,
-  /^application\/pdf$/,
-  /^application\/zip$/,
   /^text\//,
+  // Papers, archives and data files (csv/json/npz/h5/...). Admin-only uploads.
+  /^application\//,
 ];
 
 const kindFor = (mime) => {
