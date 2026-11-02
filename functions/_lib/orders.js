@@ -2,17 +2,17 @@
 // following Lulu's print job until it is delivered.
 import { now, uuid } from './util.js';
 import { LEVELS, createPrintJob, getPrintJob, jobProgress, luluConfigured, luluSandbox } from './lulu.js';
-import { stripe, stripeTestMode } from './stripe.js';
+import { stripe, stripeKey, stripePublishableKey, stripeTestMode } from './stripe.js';
 
 // Open only when Lulu and Stripe are both set up, and both are live or both are test:
 // a live payment must never become a sandbox print job, or the reverse.
 export const storeOpen = (env) =>
   env.STORE_ENABLED !== 'false' &&
   luluConfigured(env) &&
-  !!env.STRIPE_SECRET_KEY &&
-  !!env.STRIPE_PUBLISHABLE_KEY &&
+  !!stripeKey(env) &&
+  !!stripePublishableKey(env) &&
   luluSandbox(env) === stripeTestMode(env) &&
-  String(env.STRIPE_PUBLISHABLE_KEY).startsWith('pk_test_') === stripeTestMode(env);
+  stripePublishableKey(env).startsWith('pk_test_') === stripeTestMode(env);
 
 export const publicOrigin = (env, request) => env.SITE_URL || new URL(request.url).origin;
 
@@ -100,12 +100,14 @@ export const finalizeOrder = async (env, origin, id, session = null) => {
   if (s.payment_status !== 'paid') return order;
 
   const t = now();
+  const tax = (s.total_details && s.total_details.amount_tax) || 0;
   const claim = await db
     .prepare(
-      `UPDATE store_orders SET status = 'paid', paid_at = ?, updated_at = ?, stripe_payment_intent = ?
+      `UPDATE store_orders SET status = 'paid', paid_at = ?, updated_at = ?, stripe_payment_intent = ?,
+         tax_cents = ?, total_cents = COALESCE(?, total_cents)
        WHERE id = ? AND status = 'pending'`
     )
-    .bind(t, t, s.payment_intent || null, order.id)
+    .bind(t, t, s.payment_intent || null, tax, s.amount_total == null ? null : s.amount_total, order.id)
     .run();
   if (!claim.meta.changes) return getOrder(db, order.id);
   await logEvent(db, order.id, 'paid', `Stripe ${s.payment_intent || s.id}, ${s.amount_total} cents`);
@@ -176,6 +178,7 @@ export const publicOrder = (o) => {
     shippingLabel: LEVELS[o.shipping_level] || o.shipping_level,
     subtotalCents: o.subtotal_cents,
     shippingCents: o.shipping_cents,
+    taxCents: o.tax_cents || 0,
     totalCents: o.total_cents,
     tracking: o.tracking_json ? JSON.parse(o.tracking_json) : [],
     shipTo: { name: address.name, city: address.city, country: address.country },

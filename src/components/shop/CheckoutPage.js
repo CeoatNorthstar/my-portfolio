@@ -276,8 +276,14 @@ const CheckoutPage = () => {
                 <dt className="text-ink-2">Shipping</dt>
                 <dd className="font-mono text-ink">{quote ? money(quote.shippingCents) : '—'}</dd>
               </div>
+              {config && config.tax && (
+                <div className="flex justify-between">
+                  <dt className="text-ink-2">Sales tax</dt>
+                  <dd className="text-[12.5px] text-ink-3">added at payment</dd>
+                </div>
+              )}
               <div className="flex justify-between pt-2 text-[15px]">
-                <dt className="text-ink">Total</dt>
+                <dt className="text-ink">{config && config.tax ? 'Total before tax' : 'Total'}</dt>
                 <dd className="font-mono text-ink">{money(subtotal + (quote ? quote.shippingCents : 0))}</dd>
               </div>
             </dl>

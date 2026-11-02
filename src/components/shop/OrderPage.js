@@ -138,6 +138,12 @@ const OrderPage = () => {
                   <span className="text-ink-2">{order.shippingLabel}</span>
                   <span className="font-mono text-ink">{money(order.shippingCents)}</span>
                 </li>
+                {order.taxCents > 0 && (
+                  <li className="flex justify-between text-[14px]">
+                    <span className="text-ink-2">Sales tax</span>
+                    <span className="font-mono text-ink">{money(order.taxCents)}</span>
+                  </li>
+                )}
                 <li className="flex justify-between text-[15px] pt-2 border-t border-line">
                   <span className="text-ink">Total</span>
                   <span className="font-mono text-ink">{money(order.totalCents)}</span>

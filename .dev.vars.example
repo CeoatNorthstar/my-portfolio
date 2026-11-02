@@ -12,3 +12,8 @@ STRIPE_SECRET_KEY=
 LULU_API_BASE=https://api.sandbox.lulu.com
 LULU_CLIENT_KEY=
 LULU_CLIENT_SECRET=
+
+# The bookstore's own Stripe account (test keys locally: sk_test_ / pk_test_). Its webhook
+# secret is saved by the admin's Connect button, or can be set as STORE_STRIPE_WEBHOOK_SECRET.
+STORE_STRIPE_SECRET_KEY=
+STORE_STRIPE_PUBLISHABLE_KEY=

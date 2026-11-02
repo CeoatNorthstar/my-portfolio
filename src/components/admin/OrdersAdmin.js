@@ -5,30 +5,30 @@ import { Button, Empty, PageHeader } from './ui';
 
 const money = (cents) => `$${((cents || 0) / 100).toFixed(2)}`;
 
-// What still has to be done before the store can take orders.
-const Setup = ({ setup, onConnect, connecting, connected }) => {
+// What still has to be done before the store can take orders, with one-click connections.
+const Setup = ({ setup, onConnect, connecting, notes }) => {
   const rows = [
     ['Lulu API keys (LULU_CLIENT_KEY, LULU_CLIENT_SECRET)', setup.lulu, setup.lulu && (setup.luluSandbox ? 'sandbox' : 'live')],
-    ['Stripe keys', setup.stripe, setup.stripe && (setup.stripeTest ? 'test' : 'live')],
+    ['Stripe keys (STORE_STRIPE_SECRET_KEY, STORE_STRIPE_PUBLISHABLE_KEY)', setup.stripe, setup.stripe && (setup.stripeTest ? 'test' : 'live')],
     ['Lulu and Stripe in the same mode', setup.lulu && setup.stripe && setup.luluSandbox === setup.stripeTest],
-    ['Stripe webhook secret (STRIPE_WEBHOOK_SECRET)', setup.stripeWebhook, 'optional, recommended'],
+    ['Stripe Tax', setup.stripeTax, setup.stripeTax ? 'adds sales tax at checkout' : 'set up in Stripe → Tax (business address, registrations)'],
+    ['Stripe tells the site about payments', setup.stripeWebhook, null, 'connect-stripe-webhook', setup.stripe],
+    ['Lulu tells the site about printing and shipping', null, null, 'connect-lulu-webhook', setup.lulu],
   ];
   return (
     <section className="mb-10 rounded-xl border border-line bg-card p-5">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="label">{setup.open ? 'The store is taking orders' : 'The store is closed'}</h2>
-        {setup.lulu && (
-          <Button variant="ghost" onClick={onConnect} disabled={connecting}>
-            {connected || (connecting ? 'Connecting…' : 'Connect Lulu status updates')}
-          </Button>
-        )}
-      </div>
-      <ul className="mt-4 space-y-1.5">
-        {rows.map(([label, ok, note]) => (
-          <li key={label} className="flex items-center gap-2 text-[13.5px]">
+      <h2 className="label">{setup.open ? 'The store is taking orders' : 'The store is closed'}</h2>
+      <ul className="mt-4 space-y-2">
+        {rows.map(([label, ok, note, action, ready]) => (
+          <li key={label} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13.5px]">
             <span className={ok ? 'text-new-fg' : 'text-ink-3'}>{ok ? '●' : '○'}</span>
             <span className="text-ink">{label}</span>
             {note && <span className="text-ink-3">· {note}</span>}
+            {action && ready && (
+              <Button variant="ghost" className="ml-auto h-7 px-3 text-[12.5px]" onClick={() => onConnect(action)} disabled={connecting === action}>
+                {notes[action] || (connecting === action ? 'Connecting…' : 'Connect')}
+              </Button>
+            )}
           </li>
         ))}
       </ul>
@@ -87,7 +87,8 @@ const Order = ({ order, onChanged }) => {
             {a.street2 ? `, ${a.street2}` : ''}, {a.city} {a.state} {a.postcode}, {a.country}
           </p>
           <p>
-            Shipping {order.shipping_level} {money(order.shipping_cents)} · Lulu job {order.lulu_job_id || '—'}
+            Shipping {order.shipping_level} {money(order.shipping_cents)} · tax {money(order.tax_cents)} · Lulu job{' '}
+            {order.lulu_job_id || '—'}
             {order.lulu_status ? ` (${order.lulu_status})` : ''}
           </p>
           {order.tracking.map((t) => (
@@ -130,8 +131,8 @@ const Order = ({ order, onChanged }) => {
 
 const OrdersAdmin = () => {
   const [data, setData] = useState(null);
-  const [connecting, setConnecting] = useState(false);
-  const [connected, setConnected] = useState('');
+  const [connecting, setConnecting] = useState('');
+  const [notes, setNotes] = useState({});
 
   const load = useCallback(() => {
     admin
@@ -141,22 +142,23 @@ const OrdersAdmin = () => {
   }, []);
   useEffect(load, [load]);
 
-  const connect = async () => {
-    setConnecting(true);
+  const connect = async (action) => {
+    setConnecting(action);
     try {
-      const r = await admin.storeAction('connect-lulu-webhook');
-      setConnected(r.created ? 'Connected' : 'Already connected');
+      const r = await admin.storeAction(action);
+      setNotes((n) => ({ ...n, [action]: r.created ? 'Connected' : 'Already connected' }));
+      load();
     } catch (err) {
-      setConnected(err.message);
+      setNotes((n) => ({ ...n, [action]: err.message }));
     } finally {
-      setConnecting(false);
+      setConnecting('');
     }
   };
 
   return (
     <div>
       <PageHeader title="Orders" />
-      {data && data.setup && <Setup setup={data.setup} onConnect={connect} connecting={connecting} connected={connected} />}
+      {data && data.setup && <Setup setup={data.setup} onConnect={connect} connecting={connecting} notes={notes} />}
       {data && data.orders.length === 0 && <Empty>No orders yet.</Empty>}
       {data && data.orders.length > 0 && (
         <ul className="divide-y divide-line border-y border-line">

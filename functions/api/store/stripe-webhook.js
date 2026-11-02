@@ -1,12 +1,12 @@
 import { error, handle, json } from '../../_lib/response.js';
 import { finalizeOrder, publicOrigin } from '../../_lib/orders.js';
-import { checkStripeSignature } from '../../_lib/stripe.js';
+import { checkStripeSignature, webhookSecret } from '../../_lib/stripe.js';
 
 // POST /api/store/stripe-webhook — Stripe says a checkout was paid; send the order to Lulu
 // even if the customer closed the tab before coming back to the site.
 export const onRequestPost = handle(async ({ request, env }) => {
   const raw = await request.text();
-  if (!(await checkStripeSignature(env.STRIPE_WEBHOOK_SECRET, raw, request.headers.get('Stripe-Signature')))) {
+  if (!(await checkStripeSignature(await webhookSecret(env), raw, request.headers.get('Stripe-Signature')))) {
     return error('Invalid signature', 400);
   }
   const event = JSON.parse(raw);

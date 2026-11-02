@@ -1,7 +1,7 @@
 import { handle, json } from '../../../_lib/response.js';
 import { luluConfigured, luluSandbox } from '../../../_lib/lulu.js';
 import { storeOpen } from '../../../_lib/orders.js';
-import { stripeTestMode } from '../../../_lib/stripe.js';
+import { stripeKey, stripeTaxActive, stripeTestMode, webhookSecret } from '../../../_lib/stripe.js';
 
 // GET /api/admin/orders — recent orders, plus whether the store is set up.
 export const onRequestGet = handle(async ({ env }) => {
@@ -11,9 +11,10 @@ export const onRequestGet = handle(async ({ env }) => {
       open: storeOpen(env),
       lulu: luluConfigured(env),
       luluSandbox: luluSandbox(env),
-      stripe: !!env.STRIPE_SECRET_KEY,
+      stripe: !!stripeKey(env),
       stripeTest: stripeTestMode(env),
-      stripeWebhook: !!env.STRIPE_WEBHOOK_SECRET,
+      stripeWebhook: !!(await webhookSecret(env)),
+      stripeTax: !!stripeKey(env) && (await stripeTaxActive(env)),
     },
     orders: (results || []).map((o) => ({
       ...o,

@@ -2,11 +2,12 @@ import { error, handle, json } from '../../_lib/response.js';
 import { cartItems } from '../../_lib/catalog.js';
 import { LEVELS, LuluError, quoteFor } from '../../_lib/lulu.js';
 import { cleanAddress, logEvent, newOrderId, newToken, storeOpen } from '../../_lib/orders.js';
-import { stripe } from '../../_lib/stripe.js';
+import { TAX_CODES, stripe, stripeTaxActive } from '../../_lib/stripe.js';
 import { now } from '../../_lib/util.js';
 
 // POST /api/store/checkout { cart, address, level } — price the order again on the server,
-// save it, and open a Stripe Embedded Checkout for it.
+// save it, and open a Stripe Embedded Checkout for it. Once Stripe Tax is set up, Stripe adds
+// sales tax for the shipping address.
 export const onRequestPost = handle(async ({ request, env }) => {
   if (!storeOpen(env)) return error('Orders are not open yet', 503);
   const body = await request.json().catch(() => null);
@@ -31,34 +32,58 @@ export const onRequestPost = handle(async ({ request, env }) => {
   const origin = new URL(request.url).origin;
   const back = new URL(request.url).hostname.startsWith('shop.') ? '' : '/store';
 
+  const tax = await stripeTaxActive(env);
+  const where = {
+    line1: address.street1,
+    line2: address.street2 || undefined,
+    city: address.city,
+    state: address.state || undefined,
+    postal_code: address.postcode,
+    country: address.country,
+  };
+  const price = (cents, name, taxCode, image) => ({
+    currency: 'usd',
+    unit_amount: cents,
+    tax_behavior: 'exclusive',
+    product_data: { name, tax_code: taxCode, images: image ? [image] : undefined },
+  });
+
   let session;
   try {
+    // The customer carries the shipping address, which is what Stripe Tax goes by.
+    const customer = await stripe(env, '/v1/customers', {
+      email: address.email,
+      name: address.name,
+      phone: address.phone,
+      address: where,
+      shipping: { name: address.name, phone: address.phone, address: where },
+      metadata: { order_id: id },
+    });
     session = await stripe(env, '/v1/checkout/sessions', {
       ui_mode: 'embedded',
       mode: 'payment',
-      customer_email: address.email,
+      customer: customer.id,
+      automatic_tax: { enabled: tax },
       client_reference_id: id,
       metadata: { order_id: id },
       payment_intent_data: { description: `naol.me order ${id}`, metadata: { order_id: id } },
       line_items: [
         ...items.map((i) => ({
           quantity: i.qty,
-          price_data: {
-            currency: 'usd',
-            unit_amount: i.unit_cents,
-            product_data: { name: `${i.title} (paperback)`, images: [`${env.SITE_URL || origin}/store/${i.slug}/front.jpg`] },
-          },
+          price_data: price(i.unit_cents, `${i.title} (paperback)`, TAX_CODES.book, `${env.SITE_URL || origin}/store/${i.slug}/front.jpg`),
         })),
-        {
-          quantity: 1,
-          price_data: { currency: 'usd', unit_amount: quote.shippingCents, product_data: { name: `Shipping: ${quote.label}` } },
-        },
+        { quantity: 1, price_data: price(quote.shippingCents, `Shipping: ${quote.label}`, TAX_CODES.shipping) },
       ],
       return_url: `${origin}${back}/order/${id}?t=${token}&session_id={CHECKOUT_SESSION_ID}`,
     });
   } catch (err) {
     console.error('Stripe checkout failed:', err.message);
-    return error('Payment could not be started. Please try again in a moment.', 502);
+    return error(
+      /address|postal|zip/i.test(err.message)
+        ? 'Stripe could not use that address for tax. Please check the postcode and state.'
+        : 'Payment could not be started. Please try again in a moment.',
+      502
+    );
   }
 
   const t = now();
