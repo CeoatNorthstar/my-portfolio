@@ -13,7 +13,7 @@ export const onRequestPost = handle(async ({ request, env }) => {
     const order =
       (data.external_id && (await getOrder(env.DB, data.external_id))) ||
       (await env.DB.prepare('SELECT * FROM store_orders WHERE lulu_job_id = ? LIMIT 1').bind(data.id).first());
-    if (order) await applyJob(env.DB, order, data);
+    if (order) await applyJob(env, order, data);
   }
   return json({ received: true });
 });

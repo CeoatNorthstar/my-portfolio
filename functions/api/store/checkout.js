@@ -5,7 +5,7 @@ import { cleanAddress, logEvent, newOrderId, newToken, storeOpen } from '../../_
 import { TAX_CODES, stripe, stripeTaxActive } from '../../_lib/stripe.js';
 import { now } from '../../_lib/util.js';
 
-// POST /api/store/checkout { cart, address, level } — price the order again on the server,
+// POST /api/store/checkout { cart, address, level, optIn } — price the order again on the server,
 // save it, and open a Stripe Embedded Checkout for it. Once Stripe Tax is set up, Stripe adds
 // sales tax for the shipping address.
 export const onRequestPost = handle(async ({ request, env }) => {
@@ -64,9 +64,11 @@ export const onRequestPost = handle(async ({ request, env }) => {
       mode: 'payment',
       customer: customer.id,
       automatic_tax: { enabled: tax },
+      allow_promotion_codes: true,
       client_reference_id: id,
       metadata: { order_id: id },
-      payment_intent_data: { description: `naol.me order ${id}`, metadata: { order_id: id } },
+      // Stripe emails its own receipt, with the order number in the description.
+      payment_intent_data: { description: `naol.me order ${id}`, metadata: { order_id: id }, receipt_email: address.email },
       line_items: [
         ...items.map((i) => ({
           quantity: i.qty,
@@ -89,11 +91,12 @@ export const onRequestPost = handle(async ({ request, env }) => {
   const t = now();
   await env.DB.prepare(
     `INSERT INTO store_orders (id, token, status, email, name, address_json, items_json, shipping_level,
-       subtotal_cents, shipping_cents, total_cents, lulu_cost_cents, stripe_session_id, created_at, updated_at)
-     VALUES (?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       subtotal_cents, shipping_cents, total_cents, lulu_cost_cents, stripe_session_id, marketing_opt_in,
+       created_at, updated_at)
+     VALUES (?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(id, token, address.email, address.name, JSON.stringify(address), JSON.stringify(items), level, subtotal,
-      quote.shippingCents, total, quote.luluCents, session.id, t, t)
+      quote.shippingCents, total, quote.luluCents, session.id, body && body.optIn ? 1 : 0, t, t)
     .run();
   await logEvent(env.DB, id, 'created', `${items.map((i) => `${i.qty} x ${i.slug}`).join(', ')}; ${level}; ${total} cents`);
 

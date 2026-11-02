@@ -86,6 +86,7 @@ const CheckoutPage = () => {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
   const [payment, setPayment] = useState(null);
+  const [optIn, setOptIn] = useState(false);
   const countryList = useMemo(countries, []);
 
   useEffect(() => {
@@ -127,7 +128,7 @@ const CheckoutPage = () => {
     setBusy(true);
     setProblem('');
     try {
-      const r = await startCheckout(cart, address, level);
+      const r = await startCheckout(cart, address, level, optIn);
       setPayment(r);
     } catch (err) {
       setProblem(err.message);
@@ -241,6 +242,10 @@ const CheckoutPage = () => {
                     <p className="mt-2 text-[12.5px] text-ink-3">
                       Each copy is printed for you, which takes a few days before it ships.
                     </p>
+                    <label className="mt-6 flex items-start gap-3 text-[13.5px] text-ink-2 cursor-pointer">
+                      <input type="checkbox" checked={optIn} onChange={(e) => setOptIn(e.target.checked)} className="mt-1 accent-current" />
+                      <span>Email me when the next book is out. Nothing else, and you can say stop any time.</span>
+                    </label>
                     <button type="button" onClick={pay} disabled={busy || !level} className={`${btn.primary} mt-6`}>
                       {busy ? 'One moment…' : 'Continue to payment'}
                     </button>

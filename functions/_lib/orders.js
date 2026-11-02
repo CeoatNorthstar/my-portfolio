@@ -3,6 +3,7 @@
 import { now, uuid } from './util.js';
 import { LEVELS, createPrintJob, getPrintJob, jobProgress, luluConfigured, luluSandbox } from './lulu.js';
 import { stripe, stripeKey, stripePublishableKey, stripeTestMode } from './stripe.js';
+import { sendOrderEmail } from './mail.js';
 
 // Open only when Lulu and Stripe are both set up, and both are live or both are test:
 // a live payment must never become a sandbox print job, or the reverse.
@@ -84,6 +85,7 @@ export const submitToLulu = async (env, origin, id) => {
       .bind(String(err.message).slice(0, 500), now(), id)
       .run();
     await logEvent(db, id, 'error', `Sending to Lulu failed: ${err.message}`);
+    await sendOrderEmail(env, await getOrder(db, id), 'owner_problem', `Lulu did not accept the print job: ${err.message}`);
   }
   return getOrder(db, id);
 };
@@ -111,13 +113,18 @@ export const finalizeOrder = async (env, origin, id, session = null) => {
     .run();
   if (!claim.meta.changes) return getOrder(db, order.id);
   await logEvent(db, order.id, 'paid', `Stripe ${s.payment_intent || s.id}, ${s.amount_total} cents`);
-  return submitToLulu(env, origin, order.id);
+  const sent = await submitToLulu(env, origin, order.id);
+  await sendOrderEmail(env, sent, 'confirmation');
+  await sendOrderEmail(env, sent, 'owner_new');
+  return getOrder(db, order.id);
 };
 
 const FINISHED = ['delivered', 'rejected', 'canceled'];
 
-// Record what Lulu says about the print job (from its webhook or when we ask).
-export const applyJob = async (db, order, job) => {
+// Record what Lulu says about the print job (from its webhook or when we ask), and email the
+// reader when it ships, or the owner if Lulu gives up on it.
+export const applyJob = async (env, order, job) => {
+  const db = env.DB;
   const p = jobProgress(job);
   const t = now();
   const problem = ['rejected', 'canceled'].includes(p.status) ? p.message || order.error : order.error;
@@ -142,11 +149,15 @@ export const applyJob = async (db, order, job) => {
   if (p.lulu_status !== order.lulu_status) {
     await logEvent(db, order.id, 'lulu', `${p.lulu_status}${p.message ? `: ${p.message}` : ''}`);
   }
+  if (['shipped', 'delivered'].includes(p.status)) await sendOrderEmail(env, await getOrder(db, order.id), 'shipped');
+  if (['rejected', 'canceled'].includes(p.status)) {
+    await sendOrderEmail(env, await getOrder(db, order.id), 'owner_problem', `Lulu ${p.status} the print job${p.message ? `: ${p.message}` : ''}.`);
+  }
 };
 
 export const syncOrder = async (env, order) => {
   if (!order.lulu_job_id || !luluConfigured(env) || FINISHED.includes(order.status)) return order;
-  await applyJob(env.DB, order, await getPrintJob(env, order.lulu_job_id));
+  await applyJob(env, order, await getPrintJob(env, order.lulu_job_id));
   return getOrder(env.DB, order.id);
 };
 

@@ -41,7 +41,7 @@ export const getShopConfig = () => {
   return configRequest;
 };
 export const getQuote = (cart, address) => call('/api/store/quote', { cart, address });
-export const startCheckout = (cart, address, level) => call('/api/store/checkout', { cart, address, level });
+export const startCheckout = (cart, address, level, optIn) => call('/api/store/checkout', { cart, address, level, optIn });
 export const getOrder = (id, token, sessionId) =>
   call(
     `/api/store/orders/${encodeURIComponent(id)}?t=${encodeURIComponent(token)}${

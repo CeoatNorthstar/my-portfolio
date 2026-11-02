@@ -5,6 +5,30 @@ import { Button, Empty, PageHeader } from './ui';
 
 const money = (cents) => `$${((cents || 0) / 100).toFixed(2)}`;
 
+// One row per reader who paid, for a spreadsheet or a mailing-list import.
+const downloadCustomers = (orders) => {
+  const people = new Map();
+  for (const o of orders) {
+    if (o.status === 'pending') continue;
+    const p = people.get(o.email) || { email: o.email, name: o.name, country: o.address.country, orders: 0, spent: 0, optIn: false, last: 0 };
+    p.orders += 1;
+    p.spent += o.total_cents || 0;
+    p.optIn = p.optIn || !!o.marketing_opt_in;
+    p.last = Math.max(p.last, o.paid_at || o.created_at);
+    people.set(o.email, p);
+  }
+  const cell = (v) => `"${String(v).replace(/"/g, '""')}"`;
+  const rows = [['email', 'name', 'country', 'orders', 'spent_usd', 'wants_news', 'last_order']].concat(
+    [...people.values()].map((p) => [p.email, p.name, p.country, p.orders, (p.spent / 100).toFixed(2), p.optIn ? 'yes' : 'no', new Date(p.last).toISOString().slice(0, 10)])
+  );
+  const blob = new Blob([rows.map((r) => r.map(cell).join(',')).join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `customers-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
 // What still has to be done before the store can take orders, with one-click connections.
 const Setup = ({ setup, onConnect, connecting, notes }) => {
   const rows = [
@@ -75,6 +99,7 @@ const Order = ({ order, onChanged }) => {
           <span className={order.error ? 'text-warn-fg' : 'text-ink'}>{order.status}</span>
           <span>{order.items.map((i) => `${i.qty} × ${i.title}`).join(', ')}</span>
           <span className="font-mono">{money(order.total_cents)}</span>
+          {!!order.marketing_opt_in && <span className="badge-new">wants news</span>}
           {order.lulu_cost_cents != null && <span>Lulu ≈ {money(order.lulu_cost_cents)}</span>}
         </div>
         {order.error && <p className="mt-1 text-[13px] text-warn-fg">{order.error}</p>}
@@ -158,7 +183,13 @@ const OrdersAdmin = () => {
 
   return (
     <div>
-      <PageHeader title="Orders" />
+      <PageHeader title="Orders">
+        {data && data.orders.some((o) => o.status !== 'pending') && (
+          <Button variant="ghost" onClick={() => downloadCustomers(data.orders)}>
+            Download customers
+          </Button>
+        )}
+      </PageHeader>
       {data && data.setup && <Setup setup={data.setup} onConnect={connect} connecting={connecting} notes={notes} />}
       {data && data.orders.length === 0 && <Empty>No orders yet.</Empty>}
       {data && data.orders.length > 0 && (
