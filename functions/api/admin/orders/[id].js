@@ -1,5 +1,6 @@
 import { error, handle, json, notFound } from '../../../_lib/response.js';
 import { getOrder, logEvent, publicOrigin, submitToLulu, syncOrder } from '../../../_lib/orders.js';
+import { sendOrderEmail } from '../../../_lib/mail.js';
 
 // GET /api/admin/orders/:id — one order with its history.
 export const onRequestGet = handle(async ({ params, env }) => {
@@ -21,7 +22,11 @@ export const onRequestPost = handle(async ({ request, params, env, data }) => {
   if (action === 'submit') {
     if (order.status !== 'paid' || order.lulu_job_id) return error('Only a paid order that is not at Lulu yet can be sent.');
     await logEvent(env.DB, order.id, 'admin', `${who} retried sending to Lulu`);
-    return json({ order: await submitToLulu(env, publicOrigin(env, request), order.id) });
+    const sent = await submitToLulu(env, publicOrigin(env, request), order.id);
+    // Emails that could not go out the first time go now (each is sent only once).
+    await sendOrderEmail(env, sent, 'confirmation');
+    await sendOrderEmail(env, sent, 'owner_new');
+    return json({ order: await getOrder(env.DB, order.id) });
   }
   if (action === 'sync') return json({ order: await syncOrder(env, order) });
   return error('Unknown action');

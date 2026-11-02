@@ -70,14 +70,18 @@ export const submitToLulu = async (env, origin, id) => {
 
   const order = await getOrder(db, id);
   try {
-    const job = await createPrintJob(env, origin, order, JSON.parse(order.items_json), JSON.parse(order.address_json));
+    const address = JSON.parse(order.address_json);
+    const { job, shipTo } = await createPrintJob(env, origin, order, JSON.parse(order.items_json), address);
     await db
       .prepare(
         `UPDATE store_orders SET status = 'submitted', lulu_job_id = ?, lulu_status = ?, error = NULL,
-           updated_at = ?, synced_at = ? WHERE id = ?`
+           address_json = ?, updated_at = ?, synced_at = ? WHERE id = ?`
       )
-      .bind(job.id, jobProgress(job).lulu_status || 'CREATED', now(), now(), id)
+      .bind(job.id, jobProgress(job).lulu_status || 'CREATED', JSON.stringify(shipTo), now(), now(), id)
       .run();
+    const before = [address.street1, address.street2, address.postcode].join(' / ');
+    const after = [shipTo.street1, shipTo.street2, shipTo.postcode].join(' / ');
+    if (before !== after) await logEvent(db, id, 'lulu', `Address in the carrier's form: ${before} -> ${after}`);
     await logEvent(db, id, 'submitted', `Lulu print job ${job.id}`);
   } catch (err) {
     await db

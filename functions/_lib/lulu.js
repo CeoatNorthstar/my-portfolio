@@ -185,7 +185,27 @@ export const checkWebhookSignature = async (env, rawBody, header) => {
 
 // ── Print jobs ──
 
+// Lulu's carriers want an address in their own form ("2416 Ross Rd #201", ZIP+4). A job sent
+// with anything else waits for someone to confirm the address by hand instead of being paid
+// and printed, so ask Lulu first and ship to the address it suggests.
+const carrierAddress = async (env, items, address, level) => {
+  const cost = await costFor(env, items, address, level).catch(() => null);
+  const s = cost && cost.shipping_address && cost.shipping_address.suggested_address;
+  if (!s || !s.street1) return address;
+  return {
+    ...address,
+    street1: s.street1,
+    street2: s.street2 || '',
+    city: s.city || address.city,
+    state: s.state_code || address.state,
+    postcode: s.postcode ? String(s.postcode) : address.postcode,
+    country: s.country_code || address.country,
+  };
+};
+
+// Returns the new print job and the address it actually ships to.
 export const createPrintJob = async (env, origin, order, items, address) => {
+  const shipTo = await carrierAddress(env, items, address, order.shipping_level);
   const lines = await Promise.all(
     items.map(async (i) => ({
       external_id: `${order.id}-${i.slug}`,
@@ -198,17 +218,18 @@ export const createPrintJob = async (env, origin, order, items, address) => {
       },
     }))
   );
-  return lulu(env, '/print-jobs/', {
+  const job = await lulu(env, '/print-jobs/', {
     method: 'POST',
     body: {
       external_id: order.id,
       contact_email: env.STORE_CONTACT_EMAIL || env.CONTACT_TO_EMAIL,
       shipping_level: order.shipping_level,
       production_delay: 60,
-      shipping_address: jobAddress(address),
+      shipping_address: jobAddress(shipTo),
       line_items: lines,
     },
   });
+  return { job, shipTo };
 };
 
 export const getPrintJob = (env, id) => lulu(env, `/print-jobs/${id}/`);
