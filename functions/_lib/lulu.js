@@ -5,6 +5,8 @@ import { POD_PACKAGE, bookBySlug, printKey } from './catalog.js';
 export const LEVELS = {
   MAIL: 'Standard mail',
   PRIORITY_MAIL: 'Priority mail',
+  GROUND_HD: 'Ground courier',
+  GROUND_BUS: 'Ground courier (business address)',
   GROUND: 'Ground courier',
   EXPEDITED: 'Expedited (2-day air)',
   EXPRESS: 'Express (overnight)',
@@ -17,6 +19,9 @@ export class LuluError extends Error {
     this.detail = detail;
   }
 }
+
+// Lulu's API sits behind a firewall that turns away requests without a User-Agent.
+const USER_AGENT = 'naol.me-bookstore/1.0 (+https://shop.naol.me)';
 
 export const luluBase = (env) => (env.LULU_API_BASE || 'https://api.lulu.com').replace(/\/+$/, '');
 export const luluSandbox = (env) => luluBase(env).includes('sandbox');
@@ -44,6 +49,7 @@ const accessToken = async (env) => {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       Authorization: `Basic ${btoa(`${env.LULU_CLIENT_KEY}:${env.LULU_CLIENT_SECRET}`)}`,
+      'User-Agent': USER_AGENT,
     },
     body: 'grant_type=client_credentials',
   });
@@ -60,6 +66,7 @@ export const lulu = async (env, path, { method = 'GET', body } = {}) => {
       Authorization: `Bearer ${await accessToken(env)}`,
       'Content-Type': 'application/json',
       'Cache-Control': 'no-cache',
+      'User-Agent': USER_AGENT,
     },
     body: body ? JSON.stringify(body) : undefined,
   });
@@ -96,9 +103,6 @@ const optionsAddress = (a) => ({
 const lineItems = (items) =>
   items.map((i) => ({ page_count: bookBySlug(i.slug).pages, pod_package_id: POD_PACKAGE, quantity: i.qty }));
 
-// GROUND_HD / GROUND_BUS are delivery variants of GROUND; quote and ship them as GROUND.
-const levelOf = (level) => (String(level || '').startsWith('GROUND') ? 'GROUND' : level);
-
 const costFor = (env, items, address, level) =>
   lulu(env, '/print-job-cost-calculations/', {
     method: 'POST',
@@ -121,11 +125,11 @@ export const shippingQuotes = async (env, items, address) => {
     body: { currency: 'USD', line_items: lineItems(items), shipping_address: optionsAddress(address) },
   }).catch(() => []);
   const byLevel = {};
+  // Keep Lulu's exact levels: for US ground it offers GROUND_HD (home) or GROUND_BUS, not GROUND.
   for (const o of Array.isArray(options) ? options : options.results || []) {
-    const level = levelOf(o.level);
-    if (LEVELS[level] && !byLevel[level]) byLevel[level] = o;
+    if (LEVELS[o.level] && !byLevel[o.level]) byLevel[o.level] = o;
   }
-  const levels = Object.keys(byLevel).length ? Object.keys(byLevel) : Object.keys(LEVELS);
+  const levels = Object.keys(byLevel).length ? Object.keys(byLevel) : ['MAIL', 'PRIORITY_MAIL', 'EXPEDITED', 'EXPRESS'];
   const costs = await Promise.allSettled(levels.map((level) => costFor(env, items, address, level)));
   const quotes = costs
     .map((r, i) => (r.status === 'fulfilled' ? quoteFrom(levels[i], r.value, byLevel[levels[i]]) : null))
