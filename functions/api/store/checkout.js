@@ -60,7 +60,7 @@ export const onRequestPost = handle(async ({ request, env }) => {
       metadata: { order_id: id },
     });
     session = await stripe(env, '/v1/checkout/sessions', {
-      ui_mode: 'embedded',
+      ui_mode: 'embedded_page',
       mode: 'payment',
       customer: customer.id,
       automatic_tax: { enabled: tax },
@@ -82,7 +82,7 @@ export const onRequestPost = handle(async ({ request, env }) => {
       /address|postal|zip/i.test(err.message)
         ? 'Stripe could not use that address for tax. Please check the postcode and state.'
         : 'Payment could not be started. Please try again in a moment.',
-      502
+      422 // not a 5xx: Cloudflare replaces those with its own error page
     );
   }
 
