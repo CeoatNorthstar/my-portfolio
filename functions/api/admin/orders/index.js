@@ -9,6 +9,7 @@ export const onRequestGet = handle(async ({ env }) => {
   return json({
     setup: {
       open: storeOpen(env),
+      enabled: env.STORE_ENABLED !== 'false',
       lulu: luluConfigured(env),
       luluSandbox: luluSandbox(env),
       stripe: !!stripeKey(env),

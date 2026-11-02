@@ -36,6 +36,8 @@
     "STRIPE_PUBLISHABLE_KEY": "pk_live_51TT1ZpE0LQEeDx4zNv0YIJNvZN2HDpUGc1isiGJGbDboD35XNBEbBnSd3yUUHRnp2jh9dp1xflbf0g0xCBQRG5y300Fx3F6lke",
     // Stripe product the donation maps to.
     "STRIPE_PRODUCT_ID": "prod_Uhxz33Bkblx3Ja",
+    // The bookstore takes orders only when this is not "false" (and Lulu + Stripe are set up).
+    "STORE_ENABLED": "false",
     "STORE_STRIPE_PUBLISHABLE_KEY": "pk_live_51UHkLCHcNhI5lbRsaFEsgclQPM1AQUx36u7RtFdXocZ1G3eRE1ensczLSBH5mAdwkqWOv5f9cQQvfNTazvAPR4ES000kmbm1hW",
     // Production site URL (used for the Stripe checkout return_url).
     "SITE_URL": "https://naol.me",

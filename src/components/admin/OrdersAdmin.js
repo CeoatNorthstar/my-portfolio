@@ -11,6 +11,7 @@ const Setup = ({ setup, onConnect, connecting, notes }) => {
     ['Lulu API keys (LULU_CLIENT_KEY, LULU_CLIENT_SECRET)', setup.lulu, setup.lulu && (setup.luluSandbox ? 'sandbox' : 'live')],
     ['Stripe keys (STORE_STRIPE_SECRET_KEY, STORE_STRIPE_PUBLISHABLE_KEY)', setup.stripe, setup.stripe && (setup.stripeTest ? 'test' : 'live')],
     ['Lulu and Stripe in the same mode', setup.lulu && setup.stripe && setup.luluSandbox === setup.stripeTest],
+    ['Orders switched on', setup.enabled, setup.enabled ? null : 'STORE_ENABLED is "false" in wrangler.jsonc'],
     ['Stripe Tax', setup.stripeTax, setup.stripeTax ? 'adds sales tax at checkout' : 'set up in Stripe → Tax (business address, registrations)'],
     ['Stripe tells the site about payments', setup.stripeWebhook, null, 'connect-stripe-webhook', setup.stripe],
     ['Lulu tells the site about printing and shipping', null, null, 'connect-lulu-webhook', setup.lulu],
