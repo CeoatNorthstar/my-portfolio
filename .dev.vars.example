@@ -7,3 +7,8 @@ DEV_ADMIN_BYPASS=true
 # Stripe TEST secret key for local checkout testing (sk_test_...), used once
 # donations are switched back on.
 STRIPE_SECRET_KEY=
+
+# Lulu Print API. Sandbox keys locally (developers.sandbox.lulu.com); live keys only in Cloudflare.
+LULU_API_BASE=https://api.sandbox.lulu.com
+LULU_CLIENT_KEY=
+LULU_CLIENT_SECRET=

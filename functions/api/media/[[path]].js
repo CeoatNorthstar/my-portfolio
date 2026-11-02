@@ -3,7 +3,8 @@ import { notFound } from '../../_lib/response.js';
 // GET /api/media/<key> — stream a file from R2 (with HTTP range for video).
 export const onRequestGet = async ({ params, request, env }) => {
   const key = Array.isArray(params.path) ? params.path.join('/') : params.path;
-  if (!key) return notFound();
+  // Book print files are private; Lulu fetches them through /api/store/print-file.
+  if (!key || key.startsWith('print/')) return notFound();
 
   const range = request.headers.get('Range');
   const rangeMatch = range && range.match(/bytes=(\d*)-(\d*)/);

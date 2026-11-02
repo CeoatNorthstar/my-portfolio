@@ -11,6 +11,7 @@ export const NAV = [
   { key: 'blog', label: 'Blog' },
   { key: 'papers', label: 'Papers' },
   { key: 'data', label: 'Data' },
+  { key: 'books', label: 'Books' },
   { key: 'contact', label: 'Contact' },
   { key: 'donate', label: 'Donate' },
 ];

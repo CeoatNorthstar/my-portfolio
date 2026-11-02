@@ -110,6 +110,10 @@ export const admin = {
     request(`/api/admin/comments/${id}`, { method: 'PATCH', body: JSON.stringify({ approved }) }),
   deleteComment: (id) => del(`/api/admin/comments/${id}`),
   listMessages: () => request('/api/admin/messages'),
+  listOrders: () => request('/api/admin/orders'),
+  getOrder: (id) => request(`/api/admin/orders/${encodeURIComponent(id)}`),
+  orderAction: (id, action) => post(`/api/admin/orders/${encodeURIComponent(id)}`, { action }),
+  storeAction: (action) => post('/api/admin/store', { action }),
   upload: async (file) => {
     const form = new FormData();
     form.append('file', file);

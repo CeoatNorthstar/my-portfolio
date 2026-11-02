@@ -107,6 +107,12 @@ button {
   to { transform: translate3d(2%, 1.5%, 0); }
 }
 
+/* The bookstore's 3D shelf fades into the page instead of ending in a hard edge. */
+.shelf-fade {
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%);
+  mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%);
+}
+
 /* ─── Small utilities ─── */
 .label {
   font-family: theme('fontFamily.mono');

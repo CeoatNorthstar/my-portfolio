@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, ArrowsInSimple, ArrowsOutSimple, X } from '@phosphor-icons/react';
 import { getHome } from '../../lib/api';
+import { shopHome } from '../../lib/shop';
 import useMediaQuery from '../../hooks/useMediaQuery';
 import IconButton from '../ui/IconButton';
 import Card from './Card';
@@ -134,6 +135,13 @@ const Home = () => {
 
   const onNav = useCallback(
     (key) => {
+      // The bookstore is its own site (shop.naol.me).
+      if (key === 'books') {
+        const url = shopHome();
+        if (url.startsWith('http')) window.location.assign(url);
+        else navigate(url);
+        return;
+      }
       if (PANELS[key]) {
         navigate(panel === key ? viewPath(view) : `/${key}`);
         return;

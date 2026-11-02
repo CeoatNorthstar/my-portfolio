@@ -5,11 +5,13 @@ import NotFound from './components/NotFound';
 import Eggs from './components/eggs/Eggs';
 import { DataFloat } from './components/data/DataViewer';
 import NewBanner from './components/ui/NewBanner';
+import { onShopHost } from './lib/shop';
 
 // Full pages and the admin console load on demand.
 const PostPage = lazy(() => import('./components/blog/PostPage'));
 const PaperPage = lazy(() => import('./components/papers/PaperPage'));
 const AdminApp = lazy(() => import('./components/admin/AdminApp'));
+const ShopApp = lazy(() => import('./components/shop/ShopApp'));
 
 const Loading = () => (
   <div className="min-h-[100svh] flex items-center justify-center">
@@ -30,14 +32,29 @@ const AdminHostRedirect = () => {
 
 function App() {
   const { pathname } = useLocation();
-  const isAdmin = pathname.startsWith('/admin');
+  const shopHost = onShopHost();
+  // The admin console and the bookstore are pages of their own, without the site's extras.
+  const plain = pathname.startsWith('/admin') || pathname.startsWith('/store') || shopHost;
+
+  // shop.naol.me is the bookstore and nothing else.
+  if (shopHost) {
+    return (
+      <div className="min-h-[100svh] bg-canvas text-ink">
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            <Route path="/*" element={<ShopApp />} />
+          </Routes>
+        </Suspense>
+      </div>
+    );
+  }
 
   return (
     <div className="grain min-h-[100svh] bg-canvas text-ink">
       <AdminHostRedirect />
-      {!isAdmin && <Eggs />}
-      {!isAdmin && <DataFloat />}
-      {!isAdmin && <NewBanner />}
+      {!plain && <Eggs />}
+      {!plain && <DataFloat />}
+      {!plain && <NewBanner />}
       <Suspense fallback={<Loading />}>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -50,6 +67,7 @@ function App() {
           <Route path="/blog/:slug" element={<PostPage />} />
           <Route path="/papers/:slug" element={<PaperPage />} />
           <Route path="/admin/*" element={<AdminApp />} />
+          <Route path="/store/*" element={<ShopApp />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

@@ -12,6 +12,7 @@ import CommentsAdmin from './CommentsAdmin';
 import MessagesAdmin from './MessagesAdmin';
 import DataAdmin from './DataAdmin';
 import DataEditor from './DataEditor';
+import OrdersAdmin from './OrdersAdmin';
 
 const AccessGate = ({ onAuthed }) => {
   const [token, setToken] = useState('');
@@ -85,6 +86,9 @@ const AdminLayout = ({ children }) => (
           <NavLink to="/admin/messages" className={tab}>
             Messages
           </NavLink>
+          <NavLink to="/admin/orders" className={tab}>
+            Orders
+          </NavLink>
         </nav>
         <div className="flex items-center gap-1 shrink-0">
           <a href="/" className="hidden sm:inline-flex items-center gap-1 h-8 px-2 text-[13px] text-ink-2 hover:text-ink">
@@ -144,6 +148,7 @@ const AdminApp = () => {
         <Route path="data/:id" element={<DataEditor />} />
         <Route path="comments" element={<CommentsAdmin />} />
         <Route path="messages" element={<MessagesAdmin />} />
+        <Route path="orders" element={<OrdersAdmin />} />
       </Routes>
     </AdminLayout>
   );
